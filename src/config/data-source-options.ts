@@ -1,4 +1,4 @@
-import {DataSourceOptions} from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as process from 'node:process';
 dotenv.config();
