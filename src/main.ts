@@ -5,7 +5,7 @@ import * as process from 'node:process';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 
-dotenv.config()
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
