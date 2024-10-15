@@ -10,7 +10,7 @@ export class UserSettingInfo {
   @Column({ name: 'role', nullable: true })
   role: RoleType;
 
-  @OneToOne(type => UserEntity)
+  @OneToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 }

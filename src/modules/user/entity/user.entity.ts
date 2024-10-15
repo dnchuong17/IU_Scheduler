@@ -21,6 +21,9 @@ export class UserEntity extends BaseEntity {
   @Column()
   name: string;
 
+  @Column({ name: 'student_id' })
+  studentID: string;
+
   @OneToOne(
     () => UserSettingInfo,
     (userSettingInfo: UserSettingInfo) => userSettingInfo.user,
