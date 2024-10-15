@@ -20,15 +20,15 @@ export class CoursesEntity extends BaseEntity {
   @Column({ name: 'credits' })
   credits: number;
 
-  @Column({ name: 'no.periods' })
-  no_periods: number;
+  @Column({ name: 'no_periods' })
+  periods: number;
 
   @ManyToOne(
     () => CoursePositionEntity,
-    (coursePosition) => coursePosition.course,
+    (coursePosition) => coursePosition.courses,
   )
   coursePosition: CoursePositionEntity;
 
   @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses)
-  courseValue: CourseValueEntity[];
+  courseValues: CourseValueEntity[];
 }

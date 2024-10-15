@@ -8,7 +8,7 @@ import {
 import { CourseValueEntity } from '../courseValue/courseValue.entity';
 import { DeadlinePriorityConstant } from '../../common/deadlinePriority.constant';
 
-Entity('deadline');
+@Entity('deadline')
 export class DeadlineEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'UID' })
   id: number;

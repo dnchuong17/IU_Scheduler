@@ -2,13 +2,14 @@ import {
   BaseEntity,
   Column,
   Entity,
-  ManyToOne, OneToMany,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CoursesEntity } from '../courses/courses.entity';
 import { DeadlineEntity } from '../deadline/deadline.entity';
 
-Entity('course_value');
+@Entity('course_value')
 export class CourseValueEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_value_id' })
   id: number;
@@ -25,9 +26,9 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'date' })
   date: string;
 
-  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValue)
+  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
   courses: CoursesEntity;
 
-  @OneToMany( () => DeadlineEntity, (deadline) => deadline.courseValue)
+  @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)
   deadlines: DeadlineEntity[];
 }

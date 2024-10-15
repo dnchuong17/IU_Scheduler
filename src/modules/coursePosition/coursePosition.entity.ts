@@ -6,8 +6,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CoursesEntity } from '../courses/courses.entity';
 import { SchedulerTemplateEntity } from '../schedulerTemplate/schedulerTemplate.entity';
+import { CoursesEntity } from '../courses/courses.entity';
 
 @Entity('course_position')
 export class CoursePositionEntity extends BaseEntity {
@@ -27,5 +27,5 @@ export class CoursePositionEntity extends BaseEntity {
   scheduler: SchedulerTemplateEntity;
 
   @OneToMany(() => CoursesEntity, (course) => course.coursePosition)
-  course: CoursesEntity[];
+  courses: CoursesEntity[];
 }
