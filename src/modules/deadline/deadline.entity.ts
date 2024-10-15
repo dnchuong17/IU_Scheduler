@@ -18,13 +18,12 @@ export class DeadlineEntity extends BaseEntity {
 
   @Column({
     name: 'deadline_type',
-    type: 'enum',                      // Specify that this is an enum type
-    enum: DeadlineType,                // Reference the DeadlineType enum
-    default: DeadlineType.OTHER,       // Default value
+    type: 'enum', // Specify that this is an enum type
+    enum: DeadlineType, // Reference the DeadlineType enum
+    default: DeadlineType.OTHER, // Default value
     nullable: false,
   })
   deadlineType: DeadlineType;
-
 
   @Column({ name: 'priority', nullable: true })
   priority: DeadlineConstant;
