@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from './deadline.entity';
 import { DeadlineDto } from './deadline.dto';
-import e from 'express';
 
 @Injectable()
 export class DeadlineService {
@@ -25,6 +24,27 @@ export class DeadlineService {
       return {
         message: 'create deadline successfully',
       };
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async getAllDeadline() {
+    const query = 'SELECT * FROM deadline where is_Active = true';
+    return await this.dataSource.query(query);
+  }
+
+  async activeAlert(deadlineDto: DeadlineDto, id: number) {
+    try {
+      await this.deadlineRepository
+        .createQueryBuilder()
+        .update(DeadlineEntity)
+        .set({
+          isActive: true,
+        })
+        .where('id = :id', { id })
+        .execute();
+      return 'turn on alert';
     } catch (error) {
       throw new BadRequestException(error);
     }
