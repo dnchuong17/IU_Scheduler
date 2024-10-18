@@ -13,8 +13,6 @@ export class UserService {
   ) {}
 
   async findAccountWithEmail(email: string) {
-    const query = 'SELECT email FROM user where email=$1';
-    const result = await this.datasource.query(query, [email]);
-    return result[0] || null;
+    return await this.userRepository.findOne({ where: { email } });
   }
 }

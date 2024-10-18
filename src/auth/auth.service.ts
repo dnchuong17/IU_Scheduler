@@ -60,7 +60,7 @@ export class AuthService {
       username: signIn.username,
       sub: {
         name: userDto.name,
-        studentId: userDto.studentID,
+        sid: userDto.studentID,
       },
     };
     return {

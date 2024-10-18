@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from '../modules/user/user.dto';
 import { LocalAuthGuard } from './guard/local-auth.guard';
@@ -16,7 +10,6 @@ export class AuthController {
 
   @Post('register')
   async signup(@Body() userDto: UserDto) {
-    console.log('Signup called with data:', userDto); // Ghi log dữ liệu
     return await this.authService.signup(userDto);
   }
 
