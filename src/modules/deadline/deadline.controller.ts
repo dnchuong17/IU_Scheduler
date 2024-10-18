@@ -1,7 +1,8 @@
 import { DeadlineService } from './deadline.service';
-import { Body, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { DeadlineDto } from './deadline.dto';
 
+@Controller('deadline')
 export class DeadlineController {
   constructor(private readonly deadlineService: DeadlineService) {}
 
@@ -10,12 +11,12 @@ export class DeadlineController {
     return this.deadlineService.getAllDeadline();
   }
 
-  @Post()
+  @Post('create')
   createNewDeadline(@Body() deadlineDto: DeadlineDto) {
     return this.deadlineService.createDeadline(deadlineDto);
   }
 
-  @Post('/id')
+  @Patch('id')
   activeAlert(@Body() deadlineDto: DeadlineDto, @Param('id') id: number) {
     return this.deadlineService.activeAlert(deadlineDto, id);
   }
