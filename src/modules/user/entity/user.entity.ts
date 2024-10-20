@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserSettingInfo } from './user-info.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {
@@ -29,4 +30,7 @@ export class UserEntity extends BaseEntity {
     (userSettingInfo: UserSettingInfo) => userSettingInfo.user,
   )
   userSettingInfo: UserSettingInfo;
+
+  @OneToOne(() => SchedulerTemplateEntity, (scheduleTemplate: SchedulerTemplateEntity) => scheduleTemplate.user)
+  scheduleTemplate: SchedulerTemplateEntity;
 }
