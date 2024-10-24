@@ -1,4 +1,11 @@
-import { BaseEntity, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { CoursePositionEntity } from '../coursePosition/coursePosition.entity';
 import { UserEntity } from '../user/entity/user.entity';
 
@@ -13,7 +20,7 @@ export class SchedulerTemplateEntity extends BaseEntity {
   )
   coursePositions: CoursePositionEntity[];
 
-  @OneToOne(() => UserEntity)
-  @JoinColumn({ name: 'user_id' })
+  @OneToOne(() => UserEntity, { cascade: true })
+  @JoinColumn()
   user: UserEntity;
 }
