@@ -1,11 +1,12 @@
 import {
   BaseEntity,
   Column,
-  Entity,
+  Entity, JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserSettingInfo } from './user-info.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {
@@ -29,4 +30,11 @@ export class UserEntity extends BaseEntity {
     (userSettingInfo: UserSettingInfo) => userSettingInfo.user,
   )
   userSettingInfo: UserSettingInfo;
+
+  @OneToOne(
+    () => SchedulerTemplateEntity,
+    (scheduleTemplate: SchedulerTemplateEntity) => scheduleTemplate.user,
+  )
+  @JoinColumn({ name: 'schedule_template_id' })
+  scheduleTemplate: SchedulerTemplateEntity;
 }

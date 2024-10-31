@@ -6,6 +6,8 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import * as dotenv from 'dotenv';
+import { DeadlineModule } from './modules/deadline/deadline.module';
+import { ScheduleTemplateModule } from './modules/schedulerTemplate/scheduleTemplate.module';
 
 dotenv.config();
 
@@ -15,9 +17,11 @@ dotenv.config();
     HealthModule,
     UserModule,
     AuthModule,
+    ScheduleTemplateModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    DeadlineModule,
   ],
   controllers: [],
   providers: [],
