@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from './deadline.entity';
 import { DeadlineDto } from './deadline.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DeadlineService {
@@ -14,7 +15,8 @@ export class DeadlineService {
 
   async createDeadline(deadlineDto: DeadlineDto) {
     try {
-      const newDeadline = await this.deadlineRepository.create(deadlineDto);
+      const newDeadline = plainToInstance(DeadlineEntity, deadlineDto);
+      console.log(newDeadline);
       await this.deadlineRepository
         .createQueryBuilder()
         .insert()
@@ -25,6 +27,7 @@ export class DeadlineService {
         message: 'create deadline successfully',
       };
     } catch (error) {
+      console.log(error);
       throw new BadRequestException(error);
     }
   }
@@ -35,12 +38,13 @@ export class DeadlineService {
   }
 
   async activeAlert(deadlineDto: DeadlineDto, id: number) {
+    const active = deadlineDto.isActive;
     try {
       await this.deadlineRepository
         .createQueryBuilder()
         .update(DeadlineEntity)
         .set({
-          isActive: deadlineDto.isActive,
+          isActive: !active,
         })
         .where('id = :id', { id })
         .execute();

@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SigninDto } from '../modules/user/signin.dto';
 import { JwtService } from '@nestjs/jwt';
+import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerTemplate.entity';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,8 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
+    @InjectRepository(SchedulerTemplateEntity)
+    private readonly schedulerRepository: Repository<SchedulerTemplateEntity>,
   ) {}
 
   async signup(userDto: UserDto) {
@@ -34,7 +37,15 @@ export class AuthService {
         ...userDto,
         password: hashPassword,
       });
-      await this.userRepository.save(newUser);
+      const savedUser = await this.userRepository.save(newUser);
+
+      const template = await this.schedulerRepository.create({
+        user: savedUser,
+      });
+      const savedTemplate = await this.schedulerRepository.save(template);
+
+      savedUser.scheduleTemplate = savedTemplate;
+      await this.userRepository.save(savedUser);
       return 'sign up successfully';
     } catch (error) {
       throw new BadRequestException(error);
