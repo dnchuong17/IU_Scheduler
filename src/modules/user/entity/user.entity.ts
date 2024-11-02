@@ -1,7 +1,8 @@
 import {
   BaseEntity,
   Column,
-  Entity, JoinColumn,
+  Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -33,7 +34,10 @@ export class UserEntity extends BaseEntity {
 
   @OneToOne(
     () => SchedulerTemplateEntity,
-    (scheduleTemplate: SchedulerTemplateEntity) => scheduleTemplate.user,
+    (scheduleTemplate) => scheduleTemplate.user,
+    {
+      cascade: true,
+    },
   )
   @JoinColumn({ name: 'schedule_template_id' })
   scheduleTemplate: SchedulerTemplateEntity;
