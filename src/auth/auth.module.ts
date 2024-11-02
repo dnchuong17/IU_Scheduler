@@ -12,6 +12,7 @@ import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
 import { ScheduleTemplateModule } from '../modules/schedulerTemplate/scheduleTemplate.module';
 import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerTemplate.entity';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerT
     LocalStrategy,
     RefreshTokenStrategy,
     UserService,
+    ScheduleTemplateService,
   ],
 })
 export class AuthModule {}

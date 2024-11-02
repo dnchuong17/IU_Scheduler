@@ -1,7 +1,6 @@
 import {
   BaseEntity,
-  Entity,
-  JoinColumn,
+  Entity, JoinColumn,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -20,7 +19,6 @@ export class SchedulerTemplateEntity extends BaseEntity {
   )
   coursePositions: CoursePositionEntity[];
 
-  @OneToOne(() => UserEntity, { cascade: true })
-  @JoinColumn()
+  @OneToOne(() => UserEntity, (user) => user.scheduleTemplate)
   user: UserEntity;
 }
