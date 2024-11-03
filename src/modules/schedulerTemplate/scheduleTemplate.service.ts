@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from './schedulerTemplate.entity';
 import { Repository } from 'typeorm';
@@ -11,6 +11,13 @@ export class ScheduleTemplateService {
   ) {}
 
   async createTemplate(user: UserEntity) {
+    const existedTemplate = await this.schedulerTemplateRepo.findOne({
+      where: { user },
+    });
+
+    if (existedTemplate) {
+      throw new BadRequestException('User already has a template');
+    }
     const newTemplate = await this.schedulerTemplateRepo.create({
       user,
     });

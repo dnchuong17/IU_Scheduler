@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import * as process from 'node:process';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 
 
 async function bootstrap() {
@@ -10,5 +11,6 @@ async function bootstrap() {
   await app.listen(process.env.PORT || 3000);
   app.use(helmet());
   app.use(cookieParser());
+  app.use(TracingLoggerMiddleware);
 }
 bootstrap();

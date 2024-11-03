@@ -3,11 +3,13 @@ import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserSettingInfo } from './user-info.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
+import { DeadlineEntity } from '../../deadline/deadline.entity';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {
@@ -41,4 +43,7 @@ export class UserEntity extends BaseEntity {
   )
   @JoinColumn({ name: 'schedule_template_id' })
   scheduleTemplate: SchedulerTemplateEntity;
+
+  @OneToMany(() => DeadlineEntity, (deadlines) => deadlines.user)
+  deadlines: DeadlineEntity[];
 }
