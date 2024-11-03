@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { CourseValueEntity } from '../courseValue/courseValue.entity';
 import { DeadlineConstant, DeadlineType } from '../../common/deadline.constant';
+import { UserEntity } from '../user/entity/user.entity';
 
 @Entity('deadline')
 export class DeadlineEntity extends BaseEntity {
@@ -36,4 +37,7 @@ export class DeadlineEntity extends BaseEntity {
 
   @ManyToOne(() => CourseValueEntity, (courseValue) => courseValue.deadlines)
   courseValue: CourseValueEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.deadlines)
+  user: UserEntity;
 }

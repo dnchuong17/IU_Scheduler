@@ -16,7 +16,6 @@ export class DeadlineService {
   async createDeadline(deadlineDto: DeadlineDto) {
     try {
       const newDeadline = plainToInstance(DeadlineEntity, deadlineDto);
-      console.log(newDeadline);
       await this.deadlineRepository
         .createQueryBuilder()
         .insert()

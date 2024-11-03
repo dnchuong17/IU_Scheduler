@@ -13,6 +13,7 @@ import { SigninDto } from '../modules/user/signin.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
 import { plainToInstance } from 'class-transformer';
+import { TracingLoggerService } from '../logger/tracing-logger.service';
 
 @Injectable()
 export class AuthService {
@@ -22,9 +23,13 @@ export class AuthService {
     private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
     private readonly templateService: ScheduleTemplateService,
-  ) {}
+    private readonly logger: TracingLoggerService,
+  ) {
+    logger.setContext(AuthService.name);
+  }
 
   async signup(userDto: UserDto) {
+    this.logger.debug('sign up');
     const existedUser = await this.userService.findAccountWithEmail(
       userDto.email,
     );
@@ -37,10 +42,7 @@ export class AuthService {
         ...userDto,
         password: hashPassword,
       });
-      const savedUser = await this.userRepository.save(newUser);
-      savedUser.scheduleTemplate =
-        await this.templateService.createTemplate(savedUser);
-      await this.userRepository.save(savedUser);
+      await this.userRepository.save(newUser);
       return 'sign up successfully';
     } catch (error) {
       throw new BadRequestException(error);
