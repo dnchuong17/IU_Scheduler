@@ -11,7 +11,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SigninDto } from '../modules/user/signin.dto';
 import { JwtService } from '@nestjs/jwt';
-import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerTemplate.entity';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -20,8 +21,7 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
-    @InjectRepository(SchedulerTemplateEntity)
-    private readonly schedulerRepository: Repository<SchedulerTemplateEntity>,
+    private readonly templateService: ScheduleTemplateService,
   ) {}
 
   async signup(userDto: UserDto) {
@@ -33,18 +33,13 @@ export class AuthService {
     }
     try {
       const hashPassword = await bcrypt.hash(userDto.password, 10);
-      const newUser = await this.userRepository.create({
+      const newUser = await plainToInstance(UserEntity, {
         ...userDto,
         password: hashPassword,
       });
       const savedUser = await this.userRepository.save(newUser);
-
-      const template = await this.schedulerRepository.create({
-        user: savedUser,
-      });
-      const savedTemplate = await this.schedulerRepository.save(template);
-
-      savedUser.scheduleTemplate = savedTemplate;
+      savedUser.scheduleTemplate =
+        await this.templateService.createTemplate(savedUser);
       await this.userRepository.save(savedUser);
       return 'sign up successfully';
     } catch (error) {
