@@ -5,7 +5,6 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(process.env.PORT || 3000);
