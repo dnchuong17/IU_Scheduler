@@ -19,12 +19,12 @@ export class CoursesService {
       await this.coursesRepository.save(newCourse);
 
       return {
-        message: 'Course Value created successfully',
+        message: 'New course created successfully',
         courseValue: newCourse,
       };
     } catch (error) {
       console.log(error);
-      throw new BadRequestException('Error creating Course Value');
+      throw new BadRequestException('Error creating new Course');
     }
   }
 }

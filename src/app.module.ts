@@ -12,6 +12,7 @@ import { TracingLoggerModule } from './logger/tracinglogger.module';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 import { CourseValueModule } from './modules/courseValue/courseValue.module';
 import { CoursesModule } from "./modules/courses/course.module";
+import { CoursePositionModule } from "./modules/coursePosition/coursePosition.module";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ dotenv.config();
     AuthModule,
     CourseValueModule,
     CoursesModule,
+    CoursePositionModule,
     ScheduleTemplateModule,
     TracingLoggerModule,
     ConfigModule.forRoot({
