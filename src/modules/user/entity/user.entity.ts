@@ -10,6 +10,7 @@ import {
 import { UserSettingInfo } from './user-info.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
 import { DeadlineEntity } from '../../deadline/deadline.entity';
+import { IsEmail, IsNotEmpty, Length } from 'class-validator';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {
@@ -17,15 +18,21 @@ export class UserEntity extends BaseEntity {
   id: number;
 
   @Column()
+  @IsEmail({}, { message: 'Invalid email format' })
   email: string;
 
   @Column()
+  @IsNotEmpty()
+  @Length(6, 20, { message: 'Password must be between 6 and 20 characters' })
   password: string;
 
   @Column()
+  @IsNotEmpty()
   name: string;
 
   @Column({ name: 'student_id' })
+  @IsNotEmpty()
+  @Length(11, 11, { message: 'Student ID must be 11 characters' })
   studentID: string;
 
   @OneToOne(
