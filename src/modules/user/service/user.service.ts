@@ -15,4 +15,12 @@ export class UserService {
   async findAccountWithEmail(email: string) {
     return await this.userRepository.findOne({ where: { email } });
   }
+
+  async getUserInfor(id: number) {
+    const query =
+      'SELECT student_users.*, scheduler_template.* FROM student_users LEFT JOIN scheduler_template ON' +
+      ' student_users.schedule_template_id = scheduler_template.scheduler_id WHERE id=$1';
+    const user = await this.datasource.query(query, [id]);
+    return user[0];
+  }
 }
