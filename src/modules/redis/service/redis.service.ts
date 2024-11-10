@@ -10,7 +10,7 @@ export class RedisHelper {
   ) {}
 
   async get(key: Redis.RedisKey): Promise<string | null> {
-    return await this.redis.get(key);
+    return this.redis.get(key);
   }
 
   async set(key: Redis.RedisKey, value: any, ttl?: number): Promise<void> {
