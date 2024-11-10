@@ -7,8 +7,9 @@ import { UserSettingInfo } from './entity/user-info.entity';
 import { RedisHelper } from '../redis/service/redis.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, UserSettingInfo])],
+  imports: [TypeOrmModule.forFeature([UserEntity, UserSettingInfo, ScheduleTemplateModule])],
   controllers: [UserController],
   providers: [UserService, RedisHelper],
+  exports: [UserService],
 })
 export class UserModule {}

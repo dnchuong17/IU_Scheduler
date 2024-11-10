@@ -3,14 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfigAsync } from './config/typeorm.config';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './modules/user/user.module';
-import { CacheInterceptor, CacheModule } from '@nestjs/common/cache';
-import { ConfigModule,  } from '@nestjs/config';
-import * as redisStore from 'cache-manager-redis-store';
-import * as process from 'process';
-import { RedisModule } from './modules/redis/redis.module';
-import { RedisConfig } from './modules/redis/dtos/redis-creation.dto';
-import * as dotenv from 'dotenv';
-dotenv.config();
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,8 +18,19 @@ dotenv.config();
     TypeOrmModule.forRootAsync(typeOrmConfigAsync),
     HealthModule,
     UserModule,
+    AuthModule,
+    ScheduleTemplateModule,
+    TracingLoggerModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    DeadlineModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer.apply(TracingLoggerMiddleware).forRoutes('*');
+  }
+}

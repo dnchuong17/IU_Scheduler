@@ -6,7 +6,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CourseValueEntity } from '../courseValue/courseValue.entity';
-import { DeadlinePriorityConstant } from '../../common/deadlinePriority.constant';
+import { DeadlineConstant, DeadlineType } from '../../common/deadline.constant';
+import { UserEntity } from '../user/entity/user.entity';
 
 @Entity('deadline')
 export class DeadlineEntity extends BaseEntity {
@@ -16,8 +17,17 @@ export class DeadlineEntity extends BaseEntity {
   @Column({ name: 'is_Active', default: false })
   isActive: boolean;
 
+  @Column({
+    name: 'deadline_type',
+    type: 'enum', // Specify that this is an enum type
+    enum: DeadlineType, // Reference the DeadlineType enum
+    default: DeadlineType.OTHER, // Default value
+    nullable: false,
+  })
+  deadlineType: DeadlineType;
+
   @Column({ name: 'priority', nullable: true })
-  priority: DeadlinePriorityConstant;
+  priority: DeadlineConstant;
 
   @Column({ name: 'description' })
   description: string;
@@ -27,4 +37,7 @@ export class DeadlineEntity extends BaseEntity {
 
   @ManyToOne(() => CourseValueEntity, (courseValue) => courseValue.deadlines)
   courseValue: CourseValueEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.deadlines)
+  user: UserEntity;
 }
