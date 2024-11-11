@@ -14,9 +14,7 @@ export class CourseValueService {
   async createCourseValue(courseValueDto: CourseValueDto) {
     try {
       const newCourseValue = plainToInstance(CourseValueEntity, courseValueDto);
-
       await this.courseValueRepository.save(newCourseValue);
-
       return {
         message: 'New course value created successfully',
         courseValue: newCourseValue,
