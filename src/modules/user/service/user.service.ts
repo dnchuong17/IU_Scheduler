@@ -18,8 +18,7 @@ export class UserService {
 
   async getUserInfor(id: number) {
     const query =
-      'SELECT student_users.*, scheduler_template.* FROM student_users LEFT JOIN scheduler_template ON' +
-      ' student_users.schedule_template_id = scheduler_template.scheduler_id WHERE id=$1';
+      'SELECT email, name, student_id, schedule_template_id FROM student_users Where id = $1';
     const user = await this.datasource.query(query, [id]);
     return user[0];
   }
