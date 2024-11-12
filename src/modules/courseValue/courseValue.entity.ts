@@ -14,16 +14,16 @@ export class CourseValueEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_value_id' })
   id: number;
 
-  @Column({ name: 'start_period' })
+  @Column({ name: 'start_period', nullable: false })
   startPeriod: number;
 
-  @Column({ name: 'lecture' })
+  @Column({ name: 'lecture', nullable: false })
   lecture: string;
 
-  @Column({ name: 'location' })
+  @Column({ name: 'location', nullable: false })
   location: string;
 
-  @Column({ name: 'date' })
+  @Column({ name: 'date', nullable: false })
   date: string;
 
   @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)

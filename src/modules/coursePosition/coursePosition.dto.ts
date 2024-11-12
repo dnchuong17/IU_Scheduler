@@ -8,4 +8,11 @@ export class CoursePositionDto {
   @IsNumber()
   @IsNotEmpty()
   periods: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  schedulerId: number;
+
+  @IsNumber()
+  courseIds?: number[];
 }

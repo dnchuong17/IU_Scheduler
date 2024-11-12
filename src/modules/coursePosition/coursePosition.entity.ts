@@ -14,10 +14,10 @@ export class CoursePositionEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_position_id' })
   id: number;
 
-  @Column({ name: 'days_in_week' })
+  @Column({ name: 'days_in_week', nullable: false })
   days: number;
 
-  @Column({ name: 'periods' })
+  @Column({ name: 'periods', nullable: false })
   periods: number;
 
   @ManyToOne(
