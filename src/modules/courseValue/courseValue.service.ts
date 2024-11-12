@@ -20,34 +20,34 @@ export class CourseValueService {
   ) {}
 
   async createCourseValue(courseValueDto: CourseValueDto) {
-<<<<<<< HEAD
     // If the courseValue already exists
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: { courses: { id: courseValueDto.courseId } }, // Sử dụng mối quan hệ với Courses
     });
 
     if (existingCourseValue) {
-      throw new BadRequestException('Course value already exists for this course');
+      throw new BadRequestException(
+        'Course value already exists for this course',
+      );
     }
 
+    // Check if the course exists
+    const course = await this.coursesRepository.findOne({
+      where: { id: courseValueDto.courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found'); // Throw error if the course doesn't exist
+    }
+
+    const newCourseValue = plainToInstance(CourseValueEntity, courseValueDto);
+    newCourseValue.courses = course;
+
+    // Save the new course value to the database
+
     try {
-      // Check if the course exists
-      const course = await this.coursesRepository.findOne({
-        where: { id: courseValueDto.courseId },
-      });
-
-      if (!course) {
-        throw new NotFoundException('Course not found'); // Throw error if the course doesn't exist
-      }
-
       const newCourseValue = plainToInstance(CourseValueEntity, courseValueDto);
-      newCourseValue.courses = course;
 
-      // Save the new course value to the database
-=======
-    try {
-      const newCourseValue = plainToInstance(CourseValueEntity, courseValueDto);
->>>>>>> 7d26ca9e576e2a915d481261d4a4baf3f31842cf
       await this.courseValueRepository.save(newCourseValue);
       return {
         message: 'New course value created successfully',
@@ -56,7 +56,9 @@ export class CourseValueService {
     } catch (error) {
       console.error(error);
       if (error instanceof Error) {
-        throw new BadRequestException(`Error creating new course value: ${error.message}`);
+        throw new BadRequestException(
+          `Error creating new course value: ${error.message}`,
+        );
       }
       throw new BadRequestException('Error creating new course value');
     }
