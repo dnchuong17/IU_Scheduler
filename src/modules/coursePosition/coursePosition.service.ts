@@ -21,30 +21,12 @@ export class CoursePositionService {
   ) {}
 
   async createCoursePosition(@Body() coursePositionDto: CoursePositionDto) {
-    // find the shedulerTemplate instance based on the schedulerId
-    const scheduler = await this.schedulerTemplateRepository.findOneBy({
-      id: coursePositionDto.schedulerId,
-    });
-    if (!scheduler) {
-      throw new BadRequestException('Invalid scheduler ID');
-    }
 
     // Create the new CoursePosition entity
     const newCoursePosition = plainToInstance(
       CoursePositionEntity,
       coursePositionDto,
     );
-
-    // Assign the found scheduler (schedulerTemplate instance) to the new course position
-    newCoursePosition.scheduler = scheduler;
-
-    // If courseIds are provided, find corresponding courses and assign them
-    if (coursePositionDto.courseIds && coursePositionDto.courseIds.length > 0) {
-      const courses = await this.coursesRepository.findByIds(
-        coursePositionDto.courseIds,
-      );
-      newCoursePosition.courses = courses;
-    }
 
     try {
       await this.coursePositionRepository.save(newCoursePosition);

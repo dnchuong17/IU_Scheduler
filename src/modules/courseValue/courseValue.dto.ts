@@ -17,8 +17,4 @@ export class CourseValueDto {
   @IsString()
   @IsNotEmpty()
   date: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  courseId: number;
 }

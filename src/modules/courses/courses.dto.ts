@@ -25,7 +25,4 @@ export class CoursesDto {
   @IsNotEmpty()
   startPeriod?: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  coursePositionId: number; // Đảm bảo có coursePositionId
 }

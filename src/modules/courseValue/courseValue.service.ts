@@ -22,7 +22,7 @@ export class CourseValueService {
   async createCourseValue(courseValueDto: CourseValueDto) {
     // If the courseValue already exists
     const existingCourseValue = await this.courseValueRepository.findOne({
-      where: { courses: { id: courseValueDto.courseId } }, // Sử dụng mối quan hệ với Courses
+      where: { courses: { id: courseValueDto.courseId } },
     });
 
     if (existingCourseValue) {
