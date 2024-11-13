@@ -1,4 +1,4 @@
-import { Controller, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ScheduleTemplateService } from './scheduleTemplate.service';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
 
@@ -9,6 +9,11 @@ export class SchedulerTemplateController {
     private readonly logger: TracingLoggerService,
   ) {
     logger.setContext(SchedulerTemplateController.name);
+  }
+
+  @Get(':id')
+  getTemplate(@Param('id') id: number) {
+    return this.templateService.getTemplate(id);
   }
 
   @Post('create/:id')
