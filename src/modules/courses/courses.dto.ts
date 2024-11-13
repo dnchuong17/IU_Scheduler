@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+
+} from 'class-validator';
 
 export class CoursesDto {
   @IsString()
@@ -7,9 +13,19 @@ export class CoursesDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   credits: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
   periods: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  startPeriod?: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  coursePositionId: number; // Đảm bảo có coursePositionId
 }

@@ -14,13 +14,13 @@ export class CoursesEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_id' })
   id: number;
 
-  @Column({ name: 'course_name' })
+  @Column({ name: 'course_name', nullable: false })
   name: string;
 
-  @Column({ name: 'credits' })
+  @Column({ name: 'credits', nullable: false })
   credits: number;
 
-  @Column({ name: 'no_periods' })
+  @Column({ name: 'no_periods', nullable: false })
   periods: number;
 
   @ManyToOne(
