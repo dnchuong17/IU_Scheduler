@@ -10,7 +10,6 @@ export class TracingLoggerMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: (error?: any) => void): any {
     const tracingId: string = ramdomUUId();
-    console.log(tracingId);
     const store = { tracingId };
     res.setHeader('trace-id', tracingId);
     this.als.run(store, () => next());

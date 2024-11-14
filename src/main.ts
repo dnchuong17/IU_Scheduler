@@ -12,6 +12,7 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
   app.use(TracingLoggerMiddleware);
+  app.setGlobalPrefix('/api');
   const logger = new Logger();
   logger.log('Server is running in http://localhost:3000.');
 }

@@ -13,6 +13,7 @@ import { TracingLoggerModule } from './logger/tracinglogger.module';
 import { AuthModule } from './auth/auth.module';
 import { DeadlineModule } from './modules/deadline/deadline.module';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
+import { ValidationModule } from './modules/validation/validation.module';
 
 dotenv.config();
 
@@ -33,6 +34,11 @@ dotenv.config();
     ScheduleTemplateModule,
     TracingLoggerModule,
     DeadlineModule,
+    ValidationModule.register({
+      abstractAPIKey: process.env.API_KEY_EMAIL_VALIDATION,
+      publicEmailValidateAPI: process.env.API_VALIDATE_EMAIL,
+      isPublic: true,
+    }),
   ],
   controllers: [],
   providers: [],
