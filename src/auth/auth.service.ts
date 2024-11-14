@@ -14,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
 import { plainToInstance } from 'class-transformer';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
+import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly templateService: ScheduleTemplateService,
     private readonly logger: TracingLoggerService,
+    private readonly emailValidationHelper: EmailValidationHelper,
   ) {
     logger.setContext(AuthService.name);
   }
@@ -36,9 +38,16 @@ export class AuthService {
     if (existedUser) {
       throw new BadRequestException('Email already in use');
     }
+    const checkEmailResult = await this.emailValidationHelper.validateEmail(
+      userDto.email,
+    );
+    if (!checkEmailResult) {
+      this.logger.debug('Email is not real and fail to validate email');
+      throw new BadRequestException('Email is not real email');
+    }
     try {
       const hashPassword = await bcrypt.hash(userDto.password, 10);
-      const newUser = await plainToInstance(UserEntity, {
+      const newUser = plainToInstance(UserEntity, {
         ...userDto,
         password: hashPassword,
       });

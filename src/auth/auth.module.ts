@@ -15,6 +15,7 @@ import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerT
 import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
 import { TracingLoggerModule } from '../logger/tracinglogger.module';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
+import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { TracingLoggerService } from '../logger/tracing-logger.service';
     UserService,
     ScheduleTemplateService,
     TracingLoggerService,
+    EmailValidationHelper,
   ],
 })
 export class AuthModule {}
