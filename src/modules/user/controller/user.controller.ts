@@ -1,6 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { UserService } from '../service/user.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { Controller, Get, Param } from '@nestjs/common';
+import { UserService } from '../service/user.service';
 
 @Controller('user')
 export class UserController {
@@ -20,5 +20,10 @@ export class UserController {
       this.logger.error('Error finding user via email', e);
       throw e;
     }
+  }
+
+  @Get(':id')
+  userInfor(@Param('id') id: number) {
+    return this.userService.getUserInfor(id);
   }
 }

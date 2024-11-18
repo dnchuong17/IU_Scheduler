@@ -18,7 +18,7 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, RedisHelper, TracingLoggerService],
+  providers: [UserService, RedisHelper, TracingLoggerService, TypeOrmModule],
   exports: [UserService],
 })
 export class UserModule {}
