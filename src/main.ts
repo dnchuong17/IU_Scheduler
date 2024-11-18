@@ -15,5 +15,10 @@ async function bootstrap() {
   app.setGlobalPrefix('/api');
   const logger = new Logger();
   logger.log('Server is running in http://localhost:3000.');
+  app.enableCors({
+    origin: '0.0.0.0/0',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true,
+  });
 }
 bootstrap();

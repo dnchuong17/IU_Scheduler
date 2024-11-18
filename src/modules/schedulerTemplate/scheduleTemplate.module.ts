@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SchedulerTemplateEntity } from './schedulerTemplate.entity';
-import { ScheduleTemplateService } from './scheduleTemplate.service';
-import { SchedulerTemplateController } from './schedulerTemplate.controller';
+import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
+import { ScheduleTemplateService } from './service/scheduleTemplate.service';
+import { SchedulerTemplateController } from './controller/schedulerTemplate.controller';
 import { TracingLoggerModule } from '../../logger/tracinglogger.module';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
 
@@ -13,6 +13,6 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
   ],
   controllers: [SchedulerTemplateController],
   providers: [ScheduleTemplateService, TracingLoggerService],
-  exports: [ScheduleTemplateService],
+  exports: [ScheduleTemplateService, TypeOrmModule],
 })
 export class ScheduleTemplateModule {}
