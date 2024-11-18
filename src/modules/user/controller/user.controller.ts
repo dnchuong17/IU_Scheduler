@@ -1,5 +1,5 @@
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 
 @Controller('user')
