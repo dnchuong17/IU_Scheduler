@@ -59,4 +59,11 @@ export class UserService {
 
     return user;
   }
+
+  async getUserInfor(id: number) {
+    const query =
+      'SELECT email, name, student_id, schedule_template_id FROM student_users Where id = $1';
+    const user = await this.datasource.query(query, [id]);
+    return user[0];
+  }
 }
