@@ -11,8 +11,8 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
 import { ScheduleTemplateModule } from '../modules/schedulerTemplate/scheduleTemplate.module';
-import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/schedulerTemplate.entity';
-import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
+import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/entity/schedulerTemplate.entity';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
 import { TracingLoggerModule } from '../logger/tracinglogger.module';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 

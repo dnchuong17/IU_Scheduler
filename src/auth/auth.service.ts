@@ -11,7 +11,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SigninDto } from '../modules/user/signin.dto';
 import { JwtService } from '@nestjs/jwt';
-import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTemplate.service';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
 import { plainToInstance } from 'class-transformer';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 

@@ -1,4 +1,4 @@
-import { DeadlineConstant, DeadlineType } from '../../common/deadline.constant';
+import { DeadlineConstant, DeadlineType } from '../../../common/deadline.constant';
 import { IsBoolean, IsDate, IsEnum, IsOptional } from 'class-validator';
 
 export class DeadlineDto {

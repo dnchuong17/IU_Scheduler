@@ -1,6 +1,6 @@
-import { DeadlineService } from './deadline.service';
+import { DeadlineService } from '../service/deadline.service';
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { DeadlineDto } from './deadline.dto';
+import { DeadlineDto } from '../dto/deadline.dto';
 
 @Controller('deadline')
 export class DeadlineController {

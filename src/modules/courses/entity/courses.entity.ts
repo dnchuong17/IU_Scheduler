@@ -6,21 +6,21 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CoursePositionEntity } from '../coursePosition/coursePosition.entity';
-import { CourseValueEntity } from '../courseValue/courseValue.entity';
+import { CoursePositionEntity } from '../../coursePosition/entity/coursePosition.entity';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Entity('courses')
 export class CoursesEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_id' })
   id: number;
 
-  @Column({ name: 'course_name' })
+  @Column({ name: 'course_name', nullable: false })
   name: string;
 
-  @Column({ name: 'credits' })
+  @Column({ name: 'credits', nullable: false })
   credits: number;
 
-  @Column({ name: 'no_periods' })
+  @Column({ name: 'no_periods', nullable: false })
   periods: number;
 
   @ManyToOne(
