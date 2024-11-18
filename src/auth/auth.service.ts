@@ -15,6 +15,9 @@ import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTe
 import { plainToInstance } from 'class-transformer';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
+import { RedisHelper } from '../modules/redis/service/redis.service';
+import * as process from 'process';
+import { KEY } from '../common/user.constant';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +29,7 @@ export class AuthService {
     private readonly templateService: ScheduleTemplateService,
     private readonly logger: TracingLoggerService,
     private readonly emailValidationHelper: EmailValidationHelper,
+    private readonly redisHelper: RedisHelper,
   ) {
     logger.setContext(AuthService.name);
   }
@@ -72,30 +76,84 @@ export class AuthService {
   }
 
   async signIn(signIn: SigninDto) {
-    const userDto = new UserDto();
-    const payload = {
-      username: signIn.username,
-      sub: {
-        name: userDto.name,
-        sid: userDto.studentID,
-      },
-    };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
+    const isSignIn = await this.validateUser(signIn.username, signIn.password);
+    console.log(isSignIn);
+
+    if (isSignIn) {
+      const user = await this.userService.findAccountWithEmail(signIn.username);
+      const payload = {
+        username: signIn.username,
+        sub: {
+          name: user.name,
+          sid: user.studentID,
+        },
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+      const refreshToken = await this.refreshToken(signIn);
+
+      if (refreshToken) {
+        await this.redisHelper.set(KEY, refreshToken.refreshToken);
+      }
+
+      return {
+        accessToken,
+        refreshToken: refreshToken.refreshToken,
+      };
+    } else {
+      throw new UnauthorizedException('Invalid username or password');
+    }
   }
 
   async refreshToken(signIn: SigninDto) {
-    const userDto = new UserDto();
-    const payload = {
-      username: signIn.username,
-      sub: {
-        name: userDto.name,
-        studentId: userDto.studentID,
-      },
-    };
-    return {
-      refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
-    };
+    const isSignIn = await this.validateUser(signIn.username, signIn.password);
+
+    if (isSignIn) {
+      const user = await this.userService.findAccountWithEmail(signIn.username);
+      const payload = {
+        username: signIn.username,
+        sub: {
+          name: user.name,
+          studentId: user.studentID,
+        },
+      };
+
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+      await this.redisHelper.set(KEY, refreshToken);
+
+      return {
+        refreshToken,
+      };
+    }
+  }
+
+  async extractUIDFromToken() {
+    const token = await this.redisHelper.get(KEY);
+    console.log(token);
+    if (!token) {
+      throw new UnauthorizedException('Token not found');
+    }
+
+    try {
+      const decoded = await this.jwtService.decode(token);
+      console.log(decoded.sub);
+      return decoded.sub?.studentId;
+    } catch (error) {
+      this.logger.error('Failed to verify token', error);
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  isTokenExpired(token: string): boolean {
+    try {
+      const decodedToken = this.jwtService.decode(token) as { exp: number };
+      if (decodedToken && decodedToken.exp) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        return decodedToken.exp < currentTime;
+      }
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or malformed token');
+    }
   }
 }

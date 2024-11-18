@@ -4,6 +4,7 @@ import { UserDto } from '../modules/user/user.dto';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { RefreshJwtAuthGuard } from './guard/refresh-jwt-auth.guard';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
+import { SigninDto } from '../modules/user/signin.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,9 +23,9 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  signIn(@Request() req) {
+  signIn(@Body() signInDto: SigninDto) {
     this.logger.debug('receive request login');
-    return this.authService.signIn(req.user);
+    return this.authService.signIn(signInDto);
   }
 
   @UseGuards(RefreshJwtAuthGuard)

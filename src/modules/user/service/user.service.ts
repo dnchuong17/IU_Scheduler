@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { DataSource, Repository } from 'typeorm';
@@ -27,6 +27,36 @@ export class UserService {
     if (user) {
       await this.redisHelper.set(user.email, JSON.stringify(user));
     }
+    return user;
+  }
+
+  async findUserWithUID(studentId: string) {
+    if (!studentId) {
+      this.logger.error('[FIND USER] - Student ID is undefined or invalid');
+      throw new BadRequestException('Invalid student ID');
+    }
+
+    this.logger.debug(
+      `[FIND USER] - Finding user via student ID: ${studentId}`,
+    );
+
+    const user = await this.userRepository.findOne({
+      where: { studentID: studentId },
+    });
+
+    if (!user) {
+      this.logger.error(
+        `[FIND USER] - User not found for student ID: ${studentId}`,
+      );
+      throw new BadRequestException(
+        `User not found for student ID: ${studentId}`,
+      );
+    }
+
+    this.logger.debug(
+      `[FIND USER] - User found: ${JSON.stringify({ id: user.id, name: user.name })}`,
+    );
+
     return user;
   }
 }
