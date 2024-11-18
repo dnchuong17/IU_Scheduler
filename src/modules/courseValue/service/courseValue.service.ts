@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CourseValueEntity } from '../entity/courseValue.entity';
 import { CourseValueDto } from '../dto/courseValue.dto';
-import {WEEKDAY} from "../utils/course-value.constant";
+import { WEEKDAY } from '../utils/course-value.constant';
 
 @Injectable()
 export class CourseValueService {
