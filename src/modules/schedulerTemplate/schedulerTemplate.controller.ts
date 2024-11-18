@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
-import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
-import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { ScheduleTemplateService } from './service/scheduleTemplate.service';
+import { TracingLoggerService } from '../../logger/tracing-logger.service';
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {

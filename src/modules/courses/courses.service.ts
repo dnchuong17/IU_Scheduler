@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CoursesDto } from '../dto/courses.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CoursesEntity } from '../entity/courses.entity';
-import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { CoursesEntity } from './entity/courses.entity';
+import { TracingLoggerService } from '../../logger/tracing-logger.service';
+import { CoursesDto } from './dto/courses.dto';
 
 @Injectable()
 export class CoursesService {
