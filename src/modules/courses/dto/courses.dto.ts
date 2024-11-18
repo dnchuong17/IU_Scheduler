@@ -11,4 +11,6 @@ export class CoursesDto {
   credits: number;
 
   courseCode: string;
+
+  isNew: boolean;
 }

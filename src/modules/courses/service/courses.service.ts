@@ -14,26 +14,20 @@ export class CoursesService {
   ) {
     this.logger.setContext(CoursesService.name);
   }
-
-  async findCourseByCourseCode(courseCode: string) {
-    return this.coursesRepository.findOne({ where: { courseCode } });
+  async getAllCourses() {
+    const response = await this.coursesRepository.find();
+    const courseCodes = response.map((courses) => courses.courseCode);
+    this.logger.debug(`${courseCodes.length}`);
+    return response.map((courses) => courses.courseCode);
   }
 
   async createCourse(courseDto: CoursesDto) {
-    const { courseCode, name, credits } = courseDto;
-
-    this.logger.debug('[CREATE COURSE] Check existed course');
-    const existingCourse = await this.findCourseByCourseCode(courseCode);
-    if (existingCourse) {
-      throw new BadRequestException(
-        `Course with code ${courseCode} already exists.`,
-      );
-    }
-
+    const { courseCode, name, credits, isNew } = courseDto;
     const course = this.coursesRepository.create({
       courseCode,
       name,
       credits,
+      isNew,
     });
     this.logger.debug('[CREATE COURSE] Save course to database');
     return this.coursesRepository.save(course);

@@ -74,8 +74,6 @@ export class AuthService {
 
   async signIn(signIn: SigninDto) {
     const isSignIn = await this.validateUser(signIn.username, signIn.password);
-    console.log(isSignIn);
-
     if (isSignIn) {
       const user = await this.userService.findAccountWithEmail(signIn.username);
       const payload = {
@@ -116,8 +114,6 @@ export class AuthService {
       };
 
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-      await this.redisHelper.set(KEY, refreshToken);
-
       return {
         refreshToken,
       };
@@ -126,31 +122,16 @@ export class AuthService {
 
   async extractUIDFromToken() {
     const token = await this.redisHelper.get(KEY);
-    console.log(token);
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
 
     try {
       const decoded = await this.jwtService.decode(token);
-      console.log(decoded.sub);
       return decoded.sub?.studentId;
     } catch (error) {
       this.logger.error('Failed to verify token', error);
       throw new UnauthorizedException('Invalid or expired token');
-    }
-  }
-
-  isTokenExpired(token: string): boolean {
-    try {
-      const decodedToken = this.jwtService.decode(token) as { exp: number };
-      if (decodedToken && decodedToken.exp) {
-        const currentTime = Math.floor(Date.now() / 1000);
-        return decodedToken.exp < currentTime;
-      }
-      return true;
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or malformed token');
     }
   }
 }

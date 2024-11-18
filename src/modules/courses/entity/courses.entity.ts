@@ -29,6 +29,9 @@ export class CoursesEntity extends BaseEntity {
   })
   courseCode: string;
 
+  @Column({ name: 'isNew', nullable: false, type: 'boolean' })
+  isNew: boolean;
+
   @ManyToOne(
     () => CoursePositionEntity,
     (coursePosition) => coursePosition.courses,
