@@ -6,8 +6,8 @@ import { CoursesService } from './courses.service';
 export class CoursesController {
   constructor(private readonly courseService: CoursesService) {}
 
-  @Post('create')
-  async createCourse(@Body() courseDto: CoursesDto) {
-    return this.courseService.createCourse(courseDto);
-  }
+  // @Post('create')
+  // async createCourse(@Body() courseDto: CoursesDto) {
+  //   return this.courseService.createCourse(courseDto);
+  // }
 }
