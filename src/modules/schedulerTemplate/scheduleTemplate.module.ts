@@ -13,6 +13,6 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
   ],
   controllers: [SchedulerTemplateController],
   providers: [ScheduleTemplateService, TracingLoggerService],
-  exports: [ScheduleTemplateService],
+  exports: [ScheduleTemplateService, TypeOrmModule],
 })
 export class ScheduleTemplateModule {}
