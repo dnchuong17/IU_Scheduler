@@ -37,6 +37,7 @@ export class ScheduleTemplateService {
         `User with ID ${userId} already has a template`,
       );
     }
+
     const newTemplate = this.schedulerTemplateRepo.create();
     await this.schedulerTemplateRepo.save(newTemplate);
 
@@ -44,17 +45,5 @@ export class ScheduleTemplateService {
     await this.userRepo.save(user);
 
     return newTemplate;
-  }
-
-  async getTemplate(id: number) {
-    const query =
-      'SELECT scheduler_template.*, course_position.* , courses.*, course_value.* FROM scheduler_template' +
-      ' LEFT JOIN course_position ON scheduler_template.scheduler_id = course_position."schedulerId"' +
-      ' LEFT JOIN courses ON courses."coursePositionId" = course_position.course_position_id' +
-      ' LEFT JOIN course_value ON course_value."coursesId" = courses.course_id WHERE scheduler_template.scheduler_id =' +
-      ' $1';
-
-    const schedule = this.datasource.query(query, [id]);
-    return schedule;
   }
 }
