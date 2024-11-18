@@ -17,7 +17,9 @@ export class CoursesService {
   async getAllCourses() {
     const response = await this.coursesRepository.find();
     const courseCodes = response.map((courses) => courses.courseCode);
-    this.logger.debug(`${courseCodes.length}`);
+    this.logger.debug(
+      `[GET COURSE CODES] Course code length: ${courseCodes.length}`,
+    );
     return response.map((courses) => courses.courseCode);
   }
 
