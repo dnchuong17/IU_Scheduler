@@ -3,9 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CoursePositionEntity } from '../entity/coursePosition.entity';
 import { Repository } from 'typeorm';
 import { CoursePositionDto } from '../dto/coursePosition.dto';
-import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
-import { CoursesEntity } from '../../courses/entity/courses.entity';
 
 @Injectable()
 export class CoursePositionService {

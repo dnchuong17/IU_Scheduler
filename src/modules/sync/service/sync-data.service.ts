@@ -26,6 +26,9 @@ import { AuthService } from '../../../auth/auth.service';
 import { KEY, RoleType } from '../../../common/user.constant';
 import { UserEntity } from '../../user/entity/user.entity';
 import { UserSettingInfo } from '../../user/entity/user-info.entity';
+import { plainToInstance } from 'class-transformer';
+import { CoursesService } from '../../courses/service/courses.service';
+import { CoursesDto } from '../../courses/dto/courses.dto';
 
 @Injectable()
 export class SyncDataService {
@@ -43,6 +46,7 @@ export class SyncDataService {
     private readonly authService: AuthService,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    private readonly courseService: CoursesService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -108,9 +112,31 @@ export class SyncDataService {
       },
     });
     const $ = cheerio.load(response.data);
-    const subject = [];
-    const element = $('[id*="lkDownload"]');
-    element.each((index, element) => console.log($(element).html()));
+    const elements = $('[id*="lkDownload"]');
+    for (let index = 0; index < elements.length; index++) {
+      const element = elements[index];
+      const courseName = $(element).text().trim();
+      const courseCode = $(element)
+        .closest('td')
+        .prev()
+        .find('span')
+        .text()
+        .trim();
+      const credits = $(element)
+        .closest('td')
+        .next()
+        .find('span')
+        .text()
+        .trim();
+
+      const courseDto = plainToInstance(CoursesDto, {
+        courseCode,
+        name: courseName,
+        credits: Number(credits),
+      });
+      await this.courseService.createCourse(courseDto);
+    }
+
     return response.data;
   }
 

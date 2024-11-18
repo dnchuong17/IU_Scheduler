@@ -20,8 +20,14 @@ export class CoursesEntity extends BaseEntity {
   @Column({ name: 'credits', nullable: false })
   credits: number;
 
-  @Column({ name: 'no_periods', nullable: false })
-  periods: number;
+  @Column({
+    name: 'course_code',
+    nullable: false,
+    type: 'varchar',
+    length: 255,
+    unique: true,
+  })
+  courseCode: string;
 
   @ManyToOne(
     () => CoursePositionEntity,

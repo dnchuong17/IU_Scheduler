@@ -1,10 +1,10 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { forwardRef, Module } from '@nestjs/common';
 import { CoursesService } from './service/courses.service';
-import { CoursesController } from './controller/courses.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoursesEntity } from './entity/courses.entity';
 import { CoursePositionModule } from '../coursePosition/coursePosition.module';
 import { CourseValueModule } from '../courseValue/courseValue.module';
+import { TracingLoggerService } from '../../logger/tracing-logger.service';
 
 @Module({
   imports: [
@@ -12,8 +12,8 @@ import { CourseValueModule } from '../courseValue/courseValue.module';
     forwardRef(() => CoursePositionModule),
     CourseValueModule,
   ],
-  controllers: [CoursesController],
-  providers: [CoursesService],
+  controllers: [],
+  providers: [CoursesService, TracingLoggerService],
   exports: [TypeOrmModule],
 })
 export class CoursesModule {}

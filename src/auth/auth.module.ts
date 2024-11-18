@@ -11,8 +11,6 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
 import { ScheduleTemplateModule } from '../modules/schedulerTemplate/scheduleTemplate.module';
-import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/entity/schedulerTemplate.entity';
-import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
 import { TracingLoggerModule } from '../logger/tracinglogger.module';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
@@ -24,14 +22,13 @@ import * as process from 'process';
   imports: [
     UserModule,
     PassportModule,
-    ScheduleTemplateModule,
     TracingLoggerModule,
     RedisModule,
     JwtModule.register({
       secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },
     }),
-    TypeOrmModule.forFeature([UserEntity, SchedulerTemplateEntity]),
+    TypeOrmModule.forFeature([UserEntity]),
   ],
   controllers: [AuthController],
   providers: [
@@ -40,7 +37,6 @@ import * as process from 'process';
     LocalStrategy,
     RefreshTokenStrategy,
     UserService,
-    ScheduleTemplateService,
     TracingLoggerService,
     EmailValidationHelper,
     RedisHelper,

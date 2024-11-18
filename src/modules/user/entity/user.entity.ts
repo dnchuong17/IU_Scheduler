@@ -8,9 +8,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserSettingInfo } from './user-info.entity';
-import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
-import { DeadlineEntity } from '../../deadline/deadline.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 import { SyncEventEntity } from '../../sync/entities/sync-event.entity';
+import { DeadlineEntity } from '../../deadline/entity/deadline.entity';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {

@@ -11,12 +11,10 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SigninDto } from '../modules/user/signin.dto';
 import { JwtService } from '@nestjs/jwt';
-import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
 import { plainToInstance } from 'class-transformer';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
 import { RedisHelper } from '../modules/redis/service/redis.service';
-import * as process from 'process';
 import { KEY } from '../common/user.constant';
 
 @Injectable()
@@ -26,7 +24,6 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
-    private readonly templateService: ScheduleTemplateService,
     private readonly logger: TracingLoggerService,
     private readonly emailValidationHelper: EmailValidationHelper,
     private readonly redisHelper: RedisHelper,
