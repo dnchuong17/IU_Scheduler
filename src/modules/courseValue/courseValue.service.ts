@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { CourseValueEntity } from './courseValue.entity';
 import { CourseValueDto } from './courseValue.dto';
 import { plainToInstance } from 'class-transformer';
-import { CoursesEntity } from '../courses/courses.entity';
+import { CoursesEntity } from '../courses/entity/courses.entity';
 @Injectable()
 export class CourseValueService {
   constructor(

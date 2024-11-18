@@ -1,8 +1,19 @@
+import { Controller, Get, Param } from '@nestjs/common';
+import { UserService } from '../service/user.service';
 import { Controller, Get, Query } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 
 @Controller('user')
+export class UserController {
+  constructor(private readonly userService: UserService) {
+  }
+
+  @Get(':id')
+  userInfor(@Param('id') id: number) {
+    return this.userService.getUserInfor(id);
+  }
+}
 export class UserController {
   constructor(
     private readonly userService: UserService,

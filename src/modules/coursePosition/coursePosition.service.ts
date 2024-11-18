@@ -4,8 +4,8 @@ import { CoursePositionEntity } from './coursePosition.entity';
 import { Repository } from 'typeorm';
 import { CoursePositionDto } from './coursePosition.dto';
 import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateEntity } from '../schedulerTemplate/schedulerTemplate.entity';
-import { CoursesEntity } from '../courses/courses.entity';
+import { SchedulerTemplateEntity } from '../schedulerTemplate/entity/schedulerTemplate.entity';
+import { CoursesEntity } from '../courses/entity/courses.entity';
 
 @Injectable()
 export class CoursePositionService {
@@ -21,7 +21,6 @@ export class CoursePositionService {
   ) {}
 
   async createCoursePosition(@Body() coursePositionDto: CoursePositionDto) {
-
     // Create the new CoursePosition entity
     const newCoursePosition = plainToInstance(
       CoursePositionEntity,
