@@ -26,6 +26,9 @@ import { AuthService } from '../../../auth/auth.service';
 import { KEY, RoleType } from '../../../common/user.constant';
 import { UserEntity } from '../../user/entity/user.entity';
 import { UserSettingInfo } from '../../user/entity/user-info.entity';
+import { plainToInstance } from 'class-transformer';
+import { CoursesService } from '../../courses/service/courses.service';
+import { CoursesDto } from '../../courses/dto/courses.dto';
 
 @Injectable()
 export class SyncDataService {
@@ -43,6 +46,7 @@ export class SyncDataService {
     private readonly authService: AuthService,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    private readonly courseService: CoursesService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -81,15 +85,22 @@ export class SyncDataService {
     const user = await this.userService.findUserWithUID(uid);
     const syncUser = await this.getSyncUser();
     syncReq.syncUser = environment === SYNC_LOCAL ? user : syncUser;
-    await this.syncRepo.create(syncReq);
+    const syncEvent = plainToInstance(SyncEventEntity, {
+      syncEvent: syncReq.syncEvent,
+      startTime: syncReq.startTime,
+      finishTime: syncReq.finishTime,
+      status: syncReq.status,
+      failReason: syncReq.failReason,
+      user: syncReq.syncUser,
+    });
+    await this.syncRepo.save(syncEvent);
     this.logger.debug('[SYNC DATA] Sync event created successfully');
   }
 
   async syncDataFromRoadMap() {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
-    console.log(checkKey);
-    this.logger.debug('[SYNC DATA] check check key');
+    this.logger.debug('[SYNC DATA FROM ROAD MAP] check check key');
     const syncReq: SyncRequestDto = <SyncRequestDto>{
       syncEvent: SYNC_EVENT_FROM_ROADMAP,
       startTime: startAt,
@@ -97,10 +108,11 @@ export class SyncDataService {
     if (!checkKey) {
       syncReq.status = false;
       syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
-      const event = await this.createSyncEvent(syncReq);
-      this.logger.debug('[SYNC DATA] missing session id');
+      await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA FROM ROAD MAP] missing session id');
       return;
     }
+    const existCourseCodes = await this.courseService.getAllCourses();
 
     const response = await this.instance.get('/Default.aspx?page=ctdtkhoisv', {
       headers: {
@@ -108,9 +120,78 @@ export class SyncDataService {
       },
     });
     const $ = cheerio.load(response.data);
-    const subject = [];
-    const element = $('[id*="lkDownload"]');
-    element.each((index, element) => console.log($(element).html()));
+    const elements = $('[id*="lkDownload"]');
+    for (let index = 0; index < elements.length; index++) {
+      const element = elements[index];
+      const courseName = $(element).text().trim();
+      const courseCode = $(element)
+        .closest('td')
+        .prev()
+        .find('span')
+        .text()
+        .trim();
+      const credits = $(element)
+        .closest('td')
+        .next()
+        .find('span')
+        .text()
+        .trim();
+
+      const courseDto = plainToInstance(CoursesDto, {
+        courseCode,
+        name: courseName,
+        credits: Number(credits),
+        isNew: true,
+      });
+      if (existCourseCodes.includes(courseDto.courseCode)) {
+        this.logger.debug(
+          `[SYNC DATA FROM ROAD MAP] Course ${courseDto.courseCode} is existed`,
+        );
+        syncReq.status = false;
+        syncReq.failReason = SyncFailReason.EXISTED_COURSE;
+        syncReq.finishTime = new Date();
+        await this.createSyncEvent(syncReq);
+        throw new BadRequestException(
+          `Course ${courseDto.courseCode} is existed`,
+        );
+      }
+      await this.courseService.createCourse(courseDto);
+      this.logger.debug(
+        `[SYNC DATA FROM ROAD MAP] Successfully created course: ${courseCode}`,
+      );
+    }
+    this.logger.debug('[SYNC DATA FROM ROAD MAP] Create sync event');
+    syncReq.status = true;
+    syncReq.failReason = null;
+    syncReq.finishTime = new Date();
+    await this.createSyncEvent(syncReq);
+  }
+
+  async syncDataFromSchedule() {
+    const startAt = new Date();
+    const checkKey = await this.redisHelper.get(RedisSyncKey);
+    this.logger.debug('[SYNC DATA FROM ROAD MAP] check check key');
+    const syncReq: SyncRequestDto = <SyncRequestDto>{
+      syncEvent: SYNC_EVENT_FROM_ROADMAP,
+      startTime: startAt,
+    };
+    if (!checkKey) {
+      syncReq.status = false;
+      syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
+      await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA FROM ROAD MAP] missing session id');
+      return;
+    }
+    const existCourseCodes = await this.courseService.getAllCourses();
+
+    const response = await this.instance.get(
+      '/Default.aspx?page=thoikhoabieu&sta=0',
+      {
+        headers: {
+          Cookie: checkKey,
+        },
+      },
+    );
     return response.data;
   }
 

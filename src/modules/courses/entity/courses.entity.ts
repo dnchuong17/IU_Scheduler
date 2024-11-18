@@ -6,8 +6,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CoursePositionEntity } from '../coursePosition/coursePosition.entity';
-import { CourseValueEntity } from '../courseValue/courseValue.entity';
+import { CoursePositionEntity } from '../../coursePosition/entity/coursePosition.entity';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Entity('courses')
 export class CoursesEntity extends BaseEntity {
@@ -20,8 +20,17 @@ export class CoursesEntity extends BaseEntity {
   @Column({ name: 'credits', nullable: false })
   credits: number;
 
-  @Column({ name: 'no_periods', nullable: false })
-  periods: number;
+  @Column({
+    name: 'course_code',
+    nullable: false,
+    type: 'varchar',
+    length: 255,
+    unique: true,
+  })
+  courseCode: string;
+
+  @Column({ name: 'isNew', nullable: false, type: 'boolean' })
+  isNew: boolean;
 
   @ManyToOne(
     () => CoursePositionEntity,

@@ -6,8 +6,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { SchedulerTemplateEntity } from '../schedulerTemplate/entity/schedulerTemplate.entity';
-import { CoursesEntity } from '../courses/entity/courses.entity';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 @Entity('course_position')
 export class CoursePositionEntity extends BaseEntity {

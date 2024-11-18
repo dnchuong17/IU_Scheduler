@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SchedulerTemplateEntity } from './schedulerTemplate.entity';
+import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
-import { UserEntity } from '../user/entity/user.entity';
+import { UserEntity } from '../../user/entity/user.entity';
+import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -11,6 +12,7 @@ export class ScheduleTemplateService {
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
     private readonly datasource: DataSource,
+    private readonly logger: TracingLoggerService,
   ) {}
 
   async findTemplateWithUID(userId: number): Promise<boolean> {
@@ -37,7 +39,6 @@ export class ScheduleTemplateService {
         `User with ID ${userId} already has a template`,
       );
     }
-
     const newTemplate = this.schedulerTemplateRepo.create();
     await this.schedulerTemplateRepo.save(newTemplate);
 
@@ -45,5 +46,18 @@ export class ScheduleTemplateService {
     await this.userRepo.save(user);
 
     return newTemplate;
+  }
+
+  async getTemplate(id: number) {
+    this.logger.debug('[SCHEDULE TEMPLATE] Get template`s information');
+    const query =
+      'SELECT scheduler_template.*, course_position.* , courses.*, course_value.* FROM scheduler_template' +
+      ' LEFT JOIN course_position ON scheduler_template.scheduler_id = course_position."schedulerId"' +
+      ' LEFT JOIN courses ON courses."coursePositionId" = course_position.course_position_id' +
+      ' LEFT JOIN course_value ON course_value."coursesId" = courses.course_id WHERE scheduler_template.scheduler_id =' +
+      ' $1';
+
+    const schedule = this.datasource.query(query, [id]);
+    return schedule;
   }
 }

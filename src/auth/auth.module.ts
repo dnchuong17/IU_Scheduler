@@ -22,14 +22,13 @@ import * as process from 'process';
   imports: [
     UserModule,
     PassportModule,
-    ScheduleTemplateModule,
     TracingLoggerModule,
     RedisModule,
     JwtModule.register({
       secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },
     }),
-    TypeOrmModule.forFeature([UserEntity, SchedulerTemplateEntity]),
+    TypeOrmModule.forFeature([UserEntity]),
   ],
   controllers: [AuthController],
   providers: [
@@ -38,7 +37,6 @@ import * as process from 'process';
     LocalStrategy,
     RefreshTokenStrategy,
     UserService,
-    ScheduleTemplateService,
     TracingLoggerService,
     EmailValidationHelper,
     RedisHelper,

@@ -8,7 +8,6 @@ import { RedisHelper } from '../redis/service/redis.service';
 import { ScheduleTemplateModule } from '../schedulerTemplate/scheduleTemplate.module';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -19,6 +18,6 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
   ],
   controllers: [UserController],
   providers: [UserService, RedisHelper, TracingLoggerService, TypeOrmModule],
-  exports: [UserService],
+  exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}

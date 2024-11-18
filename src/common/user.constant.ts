@@ -6,4 +6,4 @@ export enum RoleType {
   SYNC = 'sync_admin',
 }
 
-export const KEY = process.env.REFRESH_TOKEN_KEY;
+export const KEY = process.env.TOKEN_KEY;
