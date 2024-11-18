@@ -6,8 +6,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CoursesEntity } from '../courses/courses.entity';
-import { DeadlineEntity } from '../deadline/deadline.entity';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { DeadlineEntity } from '../../deadline/entity/deadline.entity';
 
 @Entity('course_value')
 export class CourseValueEntity extends BaseEntity {

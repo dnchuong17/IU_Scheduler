@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CourseValueDto } from './courseValue.dto';
-import { CourseValueService } from './courseValue.service';
+import { CourseValueDto } from '../dto/courseValue.dto';
+import { CourseValueService } from '../service/courseValue.service';
 
 @Controller('courseValue')
 export class CourseValueController {

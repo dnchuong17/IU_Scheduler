@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { DeadlineEntity } from './deadline.entity';
-import { DeadlineDto } from './deadline.dto';
+import { DeadlineEntity } from '../entity/deadline.entity';
+import { DeadlineDto } from '../dto/deadline.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()

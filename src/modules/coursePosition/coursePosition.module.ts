@@ -1,8 +1,8 @@
 import { forwardRef, Module } from "@nestjs/common";
-import { CoursePositionService } from './coursePosition.service';
-import { CoursePositionController } from './coursePosition.controller';
+import { CoursePositionService } from './service/coursePosition.service';
+import { CoursePositionController } from './controller/coursePosition.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CoursePositionEntity } from './coursePosition.entity';
+import { CoursePositionEntity } from './entity/coursePosition.entity';
 import { ScheduleTemplateModule } from '../schedulerTemplate/scheduleTemplate.module';
 import { CoursesModule } from '../courses/course.module';
 

@@ -5,9 +5,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CourseValueEntity } from '../courseValue/courseValue.entity';
-import { DeadlineConstant, DeadlineType } from '../../common/deadline.constant';
-import { UserEntity } from '../user/entity/user.entity';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
+import { DeadlineConstant, DeadlineType } from '../../../common/deadline.constant';
+import { UserEntity } from '../../user/entity/user.entity';
 
 @Entity('deadline')
 export class DeadlineEntity extends BaseEntity {
