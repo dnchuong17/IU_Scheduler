@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as process from 'node:process';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
@@ -16,7 +15,7 @@ async function bootstrap() {
   const logger = new Logger();
   logger.log('Server is running in http://localhost:3000.');
   app.enableCors({
-    origin: '0.0.0.0/0',
+    origin: 'iuscheduler-production.up.railway.app',
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
   });
