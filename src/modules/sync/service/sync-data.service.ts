@@ -1,23 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 import * as https from 'https';
-import { commonBody } from '../sync.constant';
+import * as cheerio from 'cheerio';
+import {
+  RedisSyncKey,
+  SessionPrefix,
+  SYNC_EVENT_FROM_ROADMAP,
+  SYNC_LOCAL,
+  SyncFailReason,
+} from '../utils/sync.constant';
+import { RedisHelper } from '../../redis/service/redis.service';
+import { SessionIdSyncDto } from '../dto/sync.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { SyncEventEntity } from '../entities/sync-event.entity';
+import { Repository } from 'typeorm';
+import { SyncRequestDto } from '../dto/sync-request.dto';
+import { UserService } from '../../user/service/user.service';
+import { AuthService } from '../../../auth/auth.service';
+import { KEY, RoleType } from '../../../common/user.constant';
+import { UserEntity } from '../../user/entity/user.entity';
+import { UserSettingInfo } from '../../user/entity/user-info.entity';
 
 @Injectable()
 export class SyncDataService {
-  private readonly axios: AxiosInstance;
+  private readonly instance: AxiosInstance;
   private readonly username: string;
   private readonly password: string;
 
   constructor(
     private readonly logger: TracingLoggerService,
     private readonly configService: ConfigService,
+    private readonly redisHelper: RedisHelper,
+    @InjectRepository(SyncEventEntity)
+    private readonly syncRepo: Repository<SyncEventEntity>,
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
   ) {
     this.logger.setContext(SyncDataService.name);
-    this.axios = axios.create({
+    this.instance = axios.create({
       baseURL: this.configService.get<string>('BASE_URL'),
       httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
@@ -25,49 +53,73 @@ export class SyncDataService {
     this.password = this.configService.get<string>('PASSWORD');
   }
 
-  async getAuthorize() {
-    this.logger.debug('[SYNC DATA] - Login to web');
-    await this.axios.get(`/default.aspx`);
-    const payload = {
-      ...commonBody,
-      ctl00$ContentPlaceHolder1$ctl00$ucDangNhap$btnDangNhap: 'Đăng Nhập',
-      ctl00$ContentPlaceHolder1$ctl00$ucDangNhap$txtTaiKhoa: this.username,
-      ctl00$ContentPlaceHolder1$ctl00$ucDangNhap$txtMatKhau: this.password,
+  async saveSessionIdToCache(sessionIdDto: SessionIdSyncDto) {
+    this.logger.debug('[SYNC DATA] Save SessionId from web');
+    if (sessionIdDto.sessionId.startsWith(SessionPrefix)) {
+      try {
+        return await this.redisHelper.set(
+          RedisSyncKey,
+          sessionIdDto.sessionId,
+          60 * 60 * 24,
+        );
+      } catch (error) {
+        this.logger.error('Error saving SessionId to cache', error);
+        throw new InternalServerErrorException(
+          'Could not save session ID to cache',
+        );
+      }
+    }
+  }
+
+  async createSyncEvent(syncReq: SyncRequestDto) {
+    const uid = await this.authService.extractUIDFromToken();
+    this.logger.debug('[SYNC DATA] check user Id');
+    if (!uid) {
+      throw new BadRequestException('Invalid UID');
+    }
+    const environment = await this.configService.get('SYNC_ENV');
+    const user = await this.userService.findUserWithUID(uid);
+    const syncUser = await this.getSyncUser();
+    syncReq.syncUser = environment === SYNC_LOCAL ? user : syncUser;
+    await this.syncRepo.create(syncReq);
+    this.logger.debug('[SYNC DATA] Sync event created successfully');
+  }
+
+  async syncDataFromRoadMap() {
+    const startAt = new Date();
+    const checkKey = await this.redisHelper.get(RedisSyncKey);
+    console.log(checkKey);
+    this.logger.debug('[SYNC DATA] check check key');
+    const syncReq: SyncRequestDto = <SyncRequestDto>{
+      syncEvent: SYNC_EVENT_FROM_ROADMAP,
+      startTime: startAt,
     };
+    if (!checkKey) {
+      syncReq.status = false;
+      syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
+      const event = await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA] missing session id');
+      return;
+    }
 
-
-    const result = await this.axios.post('/Default.aspx?page=gioithieu', payload, {
-      withCredentials: true,
+    const response = await this.instance.get('/Default.aspx?page=ctdtkhoisv', {
+      headers: {
+        Cookie: checkKey,
+      },
     });
-
-    // Extract the 'set-cookie' header
-    const setCookieHeader = result.headers['set-cookie'];
-    if (!setCookieHeader) {
-      throw new Error('No Set-Cookie header received from the response');
-    }
-    this.logger.debug('[SYNC DATA] - Parsed Cookies');
-    return this.parseCookies(setCookieHeader);
+    const $ = cheerio.load(response.data);
+    const subject = [];
+    const element = $('[id*="lkDownload"]');
+    element.each((index, element) => console.log($(element).html()));
+    return response.data;
   }
 
-  // Helper function to parse 'set-cookie' header into a key-value object
-  parseCookies(setCookieHeader: string[]): string {
-    return setCookieHeader.map(cookie => cookie.split(';')[0]).join('; ');
-  }
-
-  async syncData() {
-    const cookie = await this.getAuthorize();
-    console.log(cookie);
-    this.logger.debug('[SYNC DATA] - Sync data from web');
-    const headers = {
-      Cookie: cookie,
-    };
-
-    const result = await this.axios.get('/Default.aspx?page=ctdtkhoisv',{ headers } );
-
-    const data = result.data;
-    if (data) {
-      this.logger.debug('[SYNC DATA] - Sync data from web successfully');
-    }
-    return data;
+  async getSyncUser() {
+    const syncAdmin = await this.userRepo
+      .createQueryBuilder('user')
+      .innerJoin('user_setting_info', 'info', 'user.id=info.user_id')
+      .where('info.role =:value', { value: RoleType.SYNC })
+      .getOne();
+    return syncAdmin;
   }
 }

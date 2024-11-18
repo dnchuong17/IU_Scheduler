@@ -10,6 +10,7 @@ import {
 import { UserSettingInfo } from './user-info.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/schedulerTemplate.entity';
 import { DeadlineEntity } from '../../deadline/deadline.entity';
+import { SyncEventEntity } from '../../sync/entities/sync-event.entity';
 
 @Entity('student_users')
 export class UserEntity extends BaseEntity {
@@ -46,4 +47,7 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => DeadlineEntity, (deadlines) => deadlines.user)
   deadlines: DeadlineEntity[];
+
+  @OneToMany(() => SyncEventEntity, (syncEvents) => syncEvents.user)
+  syncEvents: SyncEventEntity[];
 }

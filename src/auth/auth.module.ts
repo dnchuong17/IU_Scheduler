@@ -16,6 +16,9 @@ import { ScheduleTemplateService } from '../modules/schedulerTemplate/scheduleTe
 import { TracingLoggerModule } from '../logger/tracinglogger.module';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
+import { RedisModule } from '../modules/redis/redis.module';
+import { RedisHelper } from '../modules/redis/service/redis.service';
+import * as process from 'process';
 
 @Module({
   imports: [
@@ -23,8 +26,9 @@ import { EmailValidationHelper } from '../modules/validation/service/email-valid
     PassportModule,
     ScheduleTemplateModule,
     TracingLoggerModule,
+    RedisModule,
     JwtModule.register({
-      secret: '${process.env.SECRETEKEY}',
+      secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },
     }),
     TypeOrmModule.forFeature([UserEntity, SchedulerTemplateEntity]),
@@ -39,6 +43,8 @@ import { EmailValidationHelper } from '../modules/validation/service/email-valid
     ScheduleTemplateService,
     TracingLoggerService,
     EmailValidationHelper,
+    RedisHelper,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}
