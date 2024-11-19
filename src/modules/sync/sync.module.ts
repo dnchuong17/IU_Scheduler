@@ -12,6 +12,9 @@ import { ScheduleTemplateService } from '../schedulerTemplate/service/scheduleTe
 import { SchedulerTemplateEntity } from '../schedulerTemplate/entity/schedulerTemplate.entity';
 import { CoursesService } from '../courses/service/courses.service';
 import { CoursesEntity } from '../courses/entity/courses.entity';
+import { CourseValueService } from '../courseValue/service/courseValue.service';
+import { CourseValueModule } from '../courseValue/courseValue.module';
+import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { CoursesEntity } from '../courses/entity/courses.entity';
       UserEntity,
       SchedulerTemplateEntity,
       CoursesEntity,
+      CourseValueEntity,
     ]),
   ],
   controllers: [SyncController],
@@ -31,6 +35,7 @@ import { CoursesEntity } from '../courses/entity/courses.entity';
     JwtService,
     ScheduleTemplateService,
     CoursesService,
+    CourseValueService,
   ],
 })
 export class SyncModule {}

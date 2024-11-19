@@ -1,4 +1,5 @@
-import { IsInt, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
 
 export class CourseValueDto {
   @IsNumber()
@@ -15,5 +16,10 @@ export class CourseValueDto {
 
   @IsString()
   @IsNotEmpty()
-  date: string;
+  dayOfWeek: string;
+
+  group: number;
+  labGroup: number;
+  numberOfPeriods: number;
+  courses: CoursesEntity;
 }

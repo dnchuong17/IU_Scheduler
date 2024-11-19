@@ -23,8 +23,17 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'location', nullable: false })
   location: string;
 
-  @Column({ name: 'date', nullable: false })
-  date: string;
+  @Column({ name: 'date' })
+  dayOfWeek: string;
+
+  @Column({ name: 'group' })
+  group: number;
+
+  @Column({ name: 'lab_group' })
+  labGroup: number;
+
+  @Column({ name: 'no_periods', nullable: false, type: 'int' })
+  numberOfPeriods: number;
 
   @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
   courses: CoursesEntity;

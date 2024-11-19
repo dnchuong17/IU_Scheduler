@@ -6,5 +6,7 @@ export enum SyncFailReason {
   MISS_SESSION_ID = 'miss_sessionId',
   TIMEOUT = 'sync_time_out',
   EXISTED_COURSE = 'course is existed',
+  EXISTED_COURSE_VALUE = 'course value is existed',
+  NO_NEW_COURSE_VALUE = 'no new course value is created',
 }
 export const SYNC_LOCAL = 'local';
