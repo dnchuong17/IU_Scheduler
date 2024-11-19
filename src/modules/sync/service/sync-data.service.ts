@@ -12,6 +12,7 @@ import {
   RedisSyncKey,
   SessionPrefix,
   SYNC_EVENT_FROM_ROADMAP,
+  SYNC_EVENT_FROM_SCHEDULE,
   SYNC_LOCAL,
   SyncFailReason,
 } from '../utils/sync.constant';
@@ -23,12 +24,14 @@ import { Repository } from 'typeorm';
 import { SyncRequestDto } from '../dto/sync-request.dto';
 import { UserService } from '../../user/service/user.service';
 import { AuthService } from '../../../auth/auth.service';
-import { KEY, RoleType } from '../../../common/user.constant';
+import { RoleType } from '../../../common/user.constant';
 import { UserEntity } from '../../user/entity/user.entity';
-import { UserSettingInfo } from '../../user/entity/user-info.entity';
 import { plainToInstance } from 'class-transformer';
 import { CoursesService } from '../../courses/service/courses.service';
 import { CoursesDto } from '../../courses/dto/courses.dto';
+import { CourseValueService } from '../../courseValue/service/courseValue.service';
+import { CourseValueDto } from '../../courseValue/dto/courseValue.dto';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
 
 @Injectable()
 export class SyncDataService {
@@ -47,6 +50,7 @@ export class SyncDataService {
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
     private readonly courseService: CoursesService,
+    private readonly courseValueService: CourseValueService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -170,19 +174,28 @@ export class SyncDataService {
   async syncDataFromSchedule() {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
-    this.logger.debug('[SYNC DATA FROM ROAD MAP] check check key');
+    this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
     const syncReq: SyncRequestDto = <SyncRequestDto>{
-      syncEvent: SYNC_EVENT_FROM_ROADMAP,
+      syncEvent: SYNC_EVENT_FROM_SCHEDULE,
       startTime: startAt,
     };
     if (!checkKey) {
       syncReq.status = false;
       syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
       await this.createSyncEvent(syncReq);
-      this.logger.debug('[SYNC DATA FROM ROAD MAP] missing session id');
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] missing session id');
       return;
     }
-    const existCourseCodes = await this.courseService.getAllCourses();
+    const courses = await this.courseService.getCourses();
+    const courseCodeMap = new Map<string, CoursesEntity>();
+
+    courses.forEach((course) => {
+      const baseCourseCode = course.courseCode
+        .substring(0, 8)
+        .trim()
+        .toUpperCase();
+      courseCodeMap.set(baseCourseCode, course);
+    });
 
     const response = await this.instance.get(
       '/Default.aspx?page=thoikhoabieu&sta=0',
@@ -192,6 +205,103 @@ export class SyncDataService {
         },
       },
     );
+    const $ = cheerio.load(response.data);
+    const allCourseDetails = [];
+
+    $('td[onmouseover^="ddrivetip"]').each((index, element) => {
+      const onmouseoverAttr = $(element).attr('onmouseover');
+
+      if (onmouseoverAttr) {
+        const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
+        if (paramsString) {
+          // Split the parameters and remove all single quotes
+          const params = paramsString
+            .split(',')
+            .map((param) => param.replace(/'/g, '').trim());
+
+          const courseCode = params[2].trim().toUpperCase(); // Extracting the course code from params
+
+          const baseCourseCodeMatch = courseCode.match(/^([A-Z0-9]+)/);
+          let baseCourseCode = baseCourseCodeMatch
+            ? baseCourseCodeMatch[0].trim().toUpperCase()
+            : '';
+          baseCourseCode = baseCourseCode.replace(/'/g, ''); // Remove single quotes if any
+
+          // Compare extracted course code with map
+          this.logger.debug(
+            `[SYNC DATA FROM SCHEDULE] Comparing extracted course code: ${baseCourseCode} against map.`,
+          );
+          if (!courseCodeMap.has(baseCourseCode)) {
+            this.logger.debug(
+              `[SYNC DATA FROM SCHEDULE] No match found for extracted course code: ${baseCourseCode}`,
+            );
+            return;
+          }
+
+          const course = courseCodeMap.get(baseCourseCode);
+          console.log(course);
+          // Extracting the necessary values from params
+          const groupInfo = params[2]; // Nhóm and Lab info
+          const dayOfWeek = params[3].replace(/^'|'$/g, '');
+          const startPeriodStr = params[6].replace(/^'|'$/g, '');
+          const location = params[5].replace(/^'|'$/g, '');
+          const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
+          const lecture = params[8].replace(/^'|'$/g, '');
+
+          // Extract group number and labGroup number
+
+          const groupMatch = groupInfo.match(/nhóm (\d+)/i);
+          const labGroupMatch = groupInfo.match(/tổ thực hành (\d+)/i);
+
+          const startPeriod = startPeriodStr
+            ? parseInt(startPeriodStr, 10)
+            : null;
+          const numberOfPeriods = numberOfPeriodsStr
+            ? parseInt(numberOfPeriodsStr, 10)
+            : null;
+
+          const group = groupMatch ? parseInt(groupMatch[1], 10) : null;
+          const labGroup = labGroupMatch
+            ? parseInt(labGroupMatch[1], 10)
+            : null;
+          this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
+          const courseValueDto = plainToInstance(CourseValueDto, {
+            startPeriod,
+            lecture,
+            location,
+            dayOfWeek,
+            group,
+            labGroup,
+            numberOfPeriods,
+            courses: course,
+          });
+          allCourseDetails.push(courseValueDto);
+        }
+      }
+    });
+    let newCourseValueCreated = false;
+    this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+    for (const courseValueDto of allCourseDetails) {
+      const courseExists =
+        await this.courseValueService.existsCourseValue(courseValueDto);
+
+      if (courseExists) {
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+        continue;
+      }
+      await this.courseValueService.createCourseValue(courseValueDto);
+      newCourseValueCreated = true;
+      this.logger.debug(
+        '[SYNC DATA FROM SCHEDULE] Create course value successfully',
+      );
+    }
+    syncReq.status = newCourseValueCreated;
+    syncReq.finishTime = new Date();
+    syncReq.failReason = newCourseValueCreated
+      ? null
+      : SyncFailReason.EXISTED_COURSE_VALUE;
+    await this.createSyncEvent(syncReq);
+    this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
     return response.data;
   }
 

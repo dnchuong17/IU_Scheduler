@@ -20,7 +20,7 @@ export class CoursesService {
     this.logger.debug(
       `[GET COURSE CODES] Course code length: ${courseCodes.length}`,
     );
-    return response.map((courses) => courses.courseCode);
+    return courseCodes;
   }
 
   async createCourse(courseDto: CoursesDto) {
@@ -33,5 +33,9 @@ export class CoursesService {
     });
     this.logger.debug('[CREATE COURSE] Save course to database');
     return this.coursesRepository.save(course);
+  }
+
+  async getCourses() {
+    return await this.coursesRepository.find();
   }
 }

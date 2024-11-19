@@ -32,6 +32,9 @@ export class SyncEventEntity {
   })
   failReason?: string;
 
+  @Column({ name: 'is_new', type: 'boolean', default: true })
+  isNew: boolean;
+
   @ManyToOne(() => UserEntity, (user) => user.syncEvents)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
