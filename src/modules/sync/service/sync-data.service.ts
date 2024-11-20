@@ -171,7 +171,7 @@ export class SyncDataService {
     await this.createSyncEvent(syncReq);
   }
 
-  async syncDataFromSchedule() {
+  async syncDataFromSchedule(id: number) {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
@@ -198,7 +198,7 @@ export class SyncDataService {
     });
 
     const response = await this.instance.get(
-      '/Default.aspx?page=thoikhoabieu&sta=0',
+      `/Default.aspx?page=thoikhoabieu&sta=0&id=${id}`,
       {
         headers: {
           Cookie: checkKey,

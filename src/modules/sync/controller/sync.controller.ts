@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -33,10 +34,10 @@ export class SyncController {
     }
   }
 
-  @Post('schedule')
-  syncDataFromSchedule() {
+  @Post('schedule/:id')
+  syncDataFromSchedule(@Param('id') id: number) {
     try {
-      return this.syncService.syncDataFromSchedule();
+      return this.syncService.syncDataFromSchedule(id);
     } catch (error) {
       throw new BadRequestException('Cant sync data from schedule');
     }
