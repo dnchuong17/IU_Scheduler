@@ -15,12 +15,13 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type, Authorization'],
     credentials: true,
   });
+  await app.listen(3000);
   app.use(helmet());
   app.use(cookieParser());
   app.use(TracingLoggerMiddleware);
   app.setGlobalPrefix('/api');
   const logger = new Logger();
   logger.log('Server is running in http://localhost:3000.');
-  await app.listen(3000);
+
 }
 bootstrap();
