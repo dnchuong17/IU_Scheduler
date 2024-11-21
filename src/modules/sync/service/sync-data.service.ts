@@ -241,7 +241,7 @@ export class SyncDataService {
           const course = courseCodeMap.get(baseCourseCode);
           console.log(course);
           // Extracting the necessary values from params
-          const groupInfo = params[2]; // Nhóm and Lab info
+          const groupInfo = params[2];
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
           const location = params[5].replace(/^'|'$/g, '');
