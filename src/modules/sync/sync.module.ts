@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { SyncDataService } from './service/sync-data.service';
 import { SyncController } from './controller/sync.controller';
 import { HttpModule } from '@nestjs/axios';
@@ -13,11 +13,15 @@ import { SchedulerTemplateEntity } from '../schedulerTemplate/entity/schedulerTe
 import { CoursesService } from '../courses/service/courses.service';
 import { CoursesEntity } from '../courses/entity/courses.entity';
 import { CourseValueService } from '../courseValue/service/courseValue.service';
-import { CourseValueModule } from '../courseValue/courseValue.module';
 import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
+import { SYNC_PROCESSOR, syncPoolConfig } from './service/sync-pool.config';
+import { RedisModule } from '../redis/redis.module';
+import { SYNC_DATA_SERVICE } from './utils/sync.constant';
+import { ModuleRef } from '@nestjs/core';
 
 @Module({
   imports: [
+    RedisModule,
     HttpModule,
     TypeOrmModule.forFeature([
       SyncEventEntity,
@@ -29,13 +33,25 @@ import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
   ],
   controllers: [SyncController],
   providers: [
-    SyncDataService,
     UserService,
     AuthService,
     JwtService,
     ScheduleTemplateService,
     CoursesService,
     CourseValueService,
+    {
+      provide: SYNC_DATA_SERVICE,
+      useClass: SyncDataService,
+    },
+    ...syncPoolConfig,
   ],
+  exports: [SYNC_DATA_SERVICE],
 })
-export class SyncModule {}
+export class SyncModule implements OnModuleInit {
+  constructor(
+    private readonly moduleRef: ModuleRef, // Dependency inject ModuleRef
+  ) {}
+  async onModuleInit(): Promise<void> {
+    await this.moduleRef.get(SYNC_PROCESSOR, { strict: false });
+  }
+}
