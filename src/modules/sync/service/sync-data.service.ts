@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -32,6 +33,8 @@ import { CoursesDto } from '../../courses/dto/courses.dto';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CourseValueDto } from '../../courseValue/dto/courseValue.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { SYNC_POOL_NAME, SYNC_QUEUE_NAME } from './sync-pool.config';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class SyncDataService {
@@ -51,6 +54,8 @@ export class SyncDataService {
     private readonly userRepo: Repository<UserEntity>,
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
+    @Inject(SYNC_POOL_NAME)
+    private readonly syncQueue: Queue,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -80,15 +85,21 @@ export class SyncDataService {
   }
 
   async createSyncEvent(syncReq: SyncRequestDto) {
-    const uid = await this.authService.extractUIDFromToken();
     this.logger.debug('[SYNC DATA] check user Id');
-    if (!uid) {
-      throw new BadRequestException('Invalid UID');
-    }
     const environment = await this.configService.get('SYNC_ENV');
-    const user = await this.userService.findUserWithUID(uid);
-    const syncUser = await this.getSyncUser();
-    syncReq.syncUser = environment === SYNC_LOCAL ? user : syncUser;
+    this.logger.debug(`[SYNC DATA] environment ${environment}`);
+    if (environment === SYNC_LOCAL) {
+      const uid = await this.authService.extractUIDFromToken();
+      if (!uid) {
+        throw new BadRequestException('Invalid UID');
+      }
+      const user = await this.userService.findUserWithUID(uid);
+      syncReq.syncUser = user;
+    } else {
+      const syncUser = await this.getSyncUser();
+      syncReq.syncUser = syncUser;
+    }
+
     const syncEvent = plainToInstance(SyncEventEntity, {
       syncEvent: syncReq.syncEvent,
       startTime: syncReq.startTime,
@@ -171,7 +182,47 @@ export class SyncDataService {
     await this.createSyncEvent(syncReq);
   }
 
-  async syncDataFromSchedule(id: number) {
+  async processSyncSchedulerData(studentIdList?: string[]) {
+    this.logger.debug('Start to get data for sync scheduler');
+    const startTime = new Date();
+    startTime.setDate(startTime.getDate() - 7);
+    const studentIds = await this.userRepo
+      .createQueryBuilder('studentUser')
+      .innerJoin(
+        'scheduler_template',
+        'template',
+        'studentUser.schedule_template_id = template.scheduler_id',
+      )
+      .where('template.is_main_template = :value', { value: true })
+      .andWhere(
+        '(template.lastsynctime < :date OR template.lastsynctime IS NULL)',
+        { date: startTime },
+      )
+      .getMany();
+    this.logger.debug(`Total found ${studentIds.length} studentIds`);
+
+    const filerStudent = studentIds.filter((student) =>
+      studentIdList.includes(student.studentID),
+    );
+
+    this.logger.debug(`Total filtered out ${filerStudent.length} studentIds`);
+    for (const userEntity of filerStudent) {
+      const data = {
+        studentId: userEntity.studentID,
+      };
+      this.logger.debug(`Put ${data.studentId} into queue`);
+      await this.syncQueue.add(userEntity.studentID, data, {
+        removeOnComplete: true,
+        removeOnFail: true,
+        jobId: userEntity.studentID,
+      });
+    }
+  }
+  async getJobCount() {
+    return await this.syncQueue.getJob('ITCSIU22252');
+  }
+
+  async syncDataFromSchedule(id: string) {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
@@ -239,7 +290,6 @@ export class SyncDataService {
           }
 
           const course = courseCodeMap.get(baseCourseCode);
-          console.log(course);
           // Extracting the necessary values from params
           const groupInfo = params[2];
           const dayOfWeek = params[3].replace(/^'|'$/g, '');

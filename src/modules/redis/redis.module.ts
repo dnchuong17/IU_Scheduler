@@ -1,6 +1,6 @@
 import { Module, Global, DynamicModule } from '@nestjs/common';
 import Redis from 'ioredis';
-import { IOREDIS } from './redis.constant';
+import { IOREDIS, REDIS_CONFIG } from './redis.constant';
 import { RedisHelper } from './service/redis.service';
 import { RedisConfig } from './dtos/redis-creation.dto';
 
@@ -17,6 +17,10 @@ export class RedisModule {
         return Math.min(times * 50, 2000);
       },
     });
+    const config = {
+      provide: REDIS_CONFIG,
+      useValue: redisConfig,
+    };
 
     const ioredisProvider = {
       provide: IOREDIS,
@@ -25,8 +29,8 @@ export class RedisModule {
 
     return {
       module: RedisModule,
-      providers: [ioredisProvider, RedisHelper],
-      exports: [ioredisProvider, RedisHelper],
+      providers: [ioredisProvider, RedisHelper, config],
+      exports: [ioredisProvider, RedisHelper, config],
       global: true,
     };
   }
