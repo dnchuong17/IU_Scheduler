@@ -1,5 +1,6 @@
 import {
   BaseEntity,
+  Column,
   Entity,
   OneToMany,
   OneToOne,
@@ -21,4 +22,7 @@ export class SchedulerTemplateEntity extends BaseEntity {
 
   @OneToOne(() => UserEntity, (user) => user.scheduleTemplate)
   user: UserEntity;
+
+  @Column({ name: 'isSynced', type: 'boolean', default: false })
+  isSynced: boolean;
 }

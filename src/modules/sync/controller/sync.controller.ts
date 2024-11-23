@@ -3,17 +3,24 @@ import {
   Body,
   Controller,
   Get,
-  Param,
+  Inject,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SyncDataService } from '../service/sync-data.service';
 import { SessionIdSyncDto } from '../dto/sync.dto';
 import { AdminGuard } from '../../../auth/guard/admin.guard';
+import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { SYNC_DATA_SERVICE } from '../utils/sync.constant';
 
 @Controller('sync')
 export class SyncController {
-  constructor(private readonly syncService: SyncDataService) {}
+  constructor(
+    @Inject(SYNC_DATA_SERVICE)
+    private readonly syncService: SyncDataService,
+    private readonly logger: TracingLoggerService,
+  ) {}
 
   @UseGuards(AdminGuard)
   @Post('redis')
@@ -21,6 +28,7 @@ export class SyncController {
     try {
       return this.syncService.saveSessionIdToCache(sessionIdDto);
     } catch (error) {
+      this.logger.debug('input sync session fail ' + error);
       throw new BadRequestException('Invalid Session Id');
     }
   }
@@ -30,16 +38,24 @@ export class SyncController {
     try {
       return this.syncService.syncDataFromRoadMap();
     } catch (error) {
+      this.logger.debug('syncDataFromRoadMap have error ' + error.message);
       throw new BadRequestException('Cant sync data from roadmap');
     }
   }
 
-  @Post('schedule/:id')
-  syncDataFromSchedule(@Param('id') id: number) {
+  @Post('schedule')
+  syncDataFromSchedule(@Query('id') id?: string) {
     try {
-      return this.syncService.syncDataFromSchedule(id);
+      const stdentIds = id?.split(',');
+      return this.syncService.processSyncSchedulerData(stdentIds);
     } catch (error) {
+      this.logger.debug('syncDataFromSchedule have error ' + error.message);
       throw new BadRequestException('Cant sync data from schedule');
     }
+  }
+
+  @Get('jobCount')
+  getJobCount() {
+    return this.syncService.getJobCount();
   }
 }

@@ -10,3 +10,4 @@ export enum SyncFailReason {
   NO_NEW_COURSE_VALUE = 'no new course value is created',
 }
 export const SYNC_LOCAL = 'local';
+export const SYNC_DATA_SERVICE = 'SYNC_DATA_SERVICE';

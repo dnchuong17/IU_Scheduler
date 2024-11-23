@@ -15,6 +15,7 @@ import { DeadlineModule } from './modules/deadline/deadline.module';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 import { ValidationModule } from './modules/validation/validation.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { PoolModule } from './modules/pool/pool.module';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ dotenv.config();
     ScheduleTemplateModule,
     TracingLoggerModule,
     DeadlineModule,
+    PoolModule,
     SyncModule,
     ValidationModule.register({
       abstractAPIKey: process.env.API_KEY_EMAIL_VALIDATION,
