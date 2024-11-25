@@ -5,8 +5,8 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { RoleType } from '../../../common/user.constant';
 import { UserEntity } from './user.entity';
+import { RoleType } from '../../../common/user.constant';
 
 @Entity('user_setting_info')
 export class UserSettingInfo {

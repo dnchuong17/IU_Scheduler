@@ -26,7 +26,7 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'date' })
   dayOfWeek: string;
 
-  @Column({ name: 'group' })
+  @Column({ name: 'group', nullable: true })
   group: number;
 
   @Column({ name: 'lab_group' })

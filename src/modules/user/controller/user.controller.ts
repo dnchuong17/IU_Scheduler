@@ -17,7 +17,7 @@ export class UserController {
       this.logger.debug(`[FIND USER]-Find user via email ${email}`);
       return await this.userService.findAccountWithEmail(email);
     } catch (e) {
-      this.logger.error('Error finding user via email', e);
+      this.logger.error('Error finding user via email');
       throw e;
     }
   }

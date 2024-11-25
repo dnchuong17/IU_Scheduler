@@ -38,7 +38,7 @@ export class SyncController {
     try {
       return this.syncService.syncDataFromRoadMap();
     } catch (error) {
-      this.logger.debug('syncDataFromRoadMap have error ' + error.message);
+      this.logger.debug('syncDataFromRoadMap have error');
       throw new BadRequestException('Cant sync data from roadmap');
     }
   }
@@ -49,7 +49,7 @@ export class SyncController {
       const stdentIds = id?.split(',');
       return this.syncService.processSyncSchedulerData(stdentIds);
     } catch (error) {
-      this.logger.debug('syncDataFromSchedule have error ' + error.message);
+      this.logger.debug('syncDataFromSchedule have error ');
       throw new BadRequestException('Cant sync data from schedule');
     }
   }

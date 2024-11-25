@@ -14,6 +14,8 @@ import { CoursesService } from '../courses/service/courses.service';
 import { CoursesEntity } from '../courses/entity/courses.entity';
 import { CourseValueService } from '../courseValue/service/courseValue.service';
 import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
+import { CoursePositionService } from '../coursePosition/service/coursePosition.service';
+import { CoursePositionEntity } from '../coursePosition/entity/coursePosition.entity';
 import { SYNC_PROCESSOR, syncPoolConfig } from './service/sync-pool.config';
 import { RedisModule } from '../redis/redis.module';
 import { SYNC_DATA_SERVICE } from './utils/sync.constant';
@@ -29,6 +31,7 @@ import { ModuleRef } from '@nestjs/core';
       SchedulerTemplateEntity,
       CoursesEntity,
       CourseValueEntity,
+      CoursePositionEntity,
     ]),
   ],
   controllers: [SyncController],
@@ -44,6 +47,7 @@ import { ModuleRef } from '@nestjs/core';
       useClass: SyncDataService,
     },
     ...syncPoolConfig,
+    CoursePositionService,
   ],
   exports: [SYNC_DATA_SERVICE],
 })

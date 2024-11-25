@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CoursePositionEntity } from '../entity/coursePosition.entity';
 import { Repository } from 'typeorm';
@@ -10,28 +10,12 @@ export class CoursePositionService {
     @InjectRepository(CoursePositionEntity)
     private readonly coursePositionRepository: Repository<CoursePositionEntity>,
   ) {}
-  private checkNull(coursePositionDto: CoursePositionDto) {
-    if (coursePositionDto.days === null || coursePositionDto.periods === null) {
-      throw new BadRequestException('Days and periods are required.');
-    }
-  }
-  async createCoursePosition(coursePositionDto: CoursePositionDto) {
-    // check null
-    this.checkNull(coursePositionDto);
-    // check exists
-    // create new course position
-    const newCoursePosition = await this.coursePositionRepository
-      .createQueryBuilder()
-      .insert()
-      .into(CoursePositionEntity)
-      .values({
-        days: coursePositionDto.days,
-        periods: coursePositionDto.periods,
-      })
-      .execute();
-    return {
-      message: 'Create new course position successfully!',
-      newCoursePosition: newCoursePosition,
-    };
+  async createCoursePos(coursePosDto: CoursePositionDto) {
+    const newPos = await this.coursePositionRepository.create({
+      days: coursePosDto.days,
+      periods: coursePosDto.periods,
+      scheduler: coursePosDto.scheduler,
+    });
+    return await this.coursePositionRepository.save(newPos);
   }
 }

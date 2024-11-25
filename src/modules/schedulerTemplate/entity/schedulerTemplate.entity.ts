@@ -2,8 +2,8 @@ import {
   BaseEntity,
   Column,
   Entity,
+  ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
@@ -14,15 +14,21 @@ export class SchedulerTemplateEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'scheduler_id' })
   id: number;
 
+  @Column({ name: 'issynced' })
+  isSync: boolean;
+
+  @Column({ name: 'is_main_template' })
+  isMain: boolean;
+
+  @Column({ name: 'lastsynctime' })
+  lastSyncTime: Date;
+
   @OneToMany(
     () => CoursePositionEntity,
     (coursePositions) => coursePositions.scheduler,
   )
   coursePositions: CoursePositionEntity[];
 
-  @OneToOne(() => UserEntity, (user) => user.scheduleTemplate)
+  @ManyToOne(() => UserEntity, (user) => user.scheduler)
   user: UserEntity;
-
-  @Column({ name: 'isSynced', type: 'boolean', default: false })
-  isSynced: boolean;
 }
