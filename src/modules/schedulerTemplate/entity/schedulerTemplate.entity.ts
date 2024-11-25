@@ -14,13 +14,13 @@ export class SchedulerTemplateEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'scheduler_id' })
   id: number;
 
-  @Column({ name: 'issynced' })
+  @Column({ name: 'issynced', default: false })
   isSync: boolean;
 
-  @Column({ name: 'is_main_template' })
+  @Column({ name: 'is_main_template', default: false })
   isMain: boolean;
 
-  @Column({ name: 'lastsynctime' })
+  @Column({ name: 'lastsynctime', default: null })
   lastSyncTime: Date;
 
   @OneToMany(

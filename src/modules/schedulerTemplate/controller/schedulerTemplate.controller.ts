@@ -18,7 +18,6 @@ export class SchedulerTemplateController {
 
   @Post('create/:id')
   createTemplate(@Param('id') userId: number) {
-    this.logger.debug('create template');
     return this.templateService.createTemplate(userId);
   }
 }

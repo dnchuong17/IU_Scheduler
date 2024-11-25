@@ -4,12 +4,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../modules/user/service/user.service';
-import { UserDto } from '../modules/user/user.dto';
+import { UserDto } from '../modules/user/dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../modules/user/entity/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { SigninDto } from '../modules/user/signin.dto';
+import { SigninDto } from '../modules/user/dto/signin.dto';
 import { JwtService } from '@nestjs/jwt';
 import { plainToInstance } from 'class-transformer';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
