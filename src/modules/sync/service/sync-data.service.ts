@@ -35,6 +35,8 @@ import { CourseValueDto } from '../../courseValue/dto/courseValue.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SYNC_POOL_NAME, SYNC_QUEUE_NAME } from './sync-pool.config';
 import { Queue } from 'bullmq';
+import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
+import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
 
 @Injectable()
 export class SyncDataService {
@@ -54,8 +56,7 @@ export class SyncDataService {
     private readonly userRepo: Repository<UserEntity>,
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
-    @Inject(SYNC_POOL_NAME)
-    private readonly syncQueue: Queue,
+    @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -76,7 +77,7 @@ export class SyncDataService {
           60 * 60 * 24,
         );
       } catch (error) {
-        this.logger.error('Error saving SessionId to cache', error);
+        this.logger.error('Error saving SessionId to cache');
         throw new InternalServerErrorException(
           'Could not save session ID to cache',
         );

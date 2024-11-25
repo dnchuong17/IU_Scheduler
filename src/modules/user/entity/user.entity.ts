@@ -35,15 +35,8 @@ export class UserEntity extends BaseEntity {
   )
   userSettingInfo: UserSettingInfo;
 
-  @OneToOne(
-    () => SchedulerTemplateEntity,
-    (scheduleTemplate) => scheduleTemplate.user,
-    {
-      cascade: true,
-    },
-  )
-  @JoinColumn({ name: 'schedule_template_id' })
-  scheduleTemplate: SchedulerTemplateEntity;
+  @OneToMany(() => SchedulerTemplateEntity, (scheduler) => scheduler.user)
+  scheduler: SchedulerTemplateEntity[];
 
   @OneToMany(() => DeadlineEntity, (deadlines) => deadlines.user)
   deadlines: DeadlineEntity[];

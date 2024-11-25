@@ -61,9 +61,31 @@ export class UserService {
   }
 
   async getUserInfor(id: number) {
-    const query =
-      'SELECT email, name, student_id, schedule_template_id FROM student_users Where id = $1';
+    const query = `
+    SELECT 
+      u.email, 
+      u.name, 
+      u.student_id, 
+      ARRAY_AGG(st.scheduler_id) AS scheduler_ids
+    FROM 
+      student_users AS u 
+    LEFT JOIN 
+      scheduler_template AS st 
+    ON 
+      u.id = st."userId"
+    WHERE 
+      u.id = $1
+    GROUP BY 
+      u.email, u.name, u.student_id
+  `;
     const user = await this.datasource.query(query, [id]);
+
+    if (!user || user.length === 0) {
+      throw new Error('User not found');
+    }
+
     return user[0];
   }
+
+
 }

@@ -130,7 +130,7 @@ export class AuthService {
       const decoded = await this.jwtService.decode(token);
       return decoded.sub?.studentId;
     } catch (error) {
-      this.logger.error('Failed to verify token', error);
+      this.logger.error('Failed to verify token');
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
