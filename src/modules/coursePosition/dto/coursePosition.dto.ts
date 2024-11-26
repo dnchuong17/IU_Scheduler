@@ -9,6 +9,7 @@ export class CoursePositionDto {
   @IsNumber()
   @IsNotEmpty()
   periods: number;
+  startPeriod: number;
 
   scheduler: SchedulerTemplateEntity;
 }

@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 export class CourseValueDto {
   @IsNumber()
@@ -13,13 +14,6 @@ export class CourseValueDto {
   @IsString()
   @IsNotEmpty()
   location: string;
-
-  @IsString()
-  @IsNotEmpty()
-  dayOfWeek: string;
-
-  group: number;
-  labGroup: number;
-  numberOfPeriods: number;
   courses: CoursesEntity;
+  template: SchedulerTemplateEntity;
 }

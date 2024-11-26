@@ -18,12 +18,7 @@ export class CourseValueService {
   async getAllCourseValues() {
     const response = await this.courseValueRepository.find();
     const courseValues = response.map((courseValue) => ({
-      startPeriod: courseValue.startPeriod,
       lecture: courseValue.lecture,
-      date: courseValue.dayOfWeek,
-      group: courseValue.group,
-      labGroup: courseValue.labGroup,
-      numberOfPeriods: courseValue.numberOfPeriods,
       location: courseValue.location,
     }));
     this.logger.debug(
@@ -34,14 +29,10 @@ export class CourseValueService {
 
   async createCourseValue(courseValueDto: CourseValueDto) {
     const newCourseValue = await this.courseValueRepository.create({
-      startPeriod: courseValueDto.startPeriod,
       lecture: courseValueDto.lecture,
       location: courseValueDto.location,
-      dayOfWeek: courseValueDto.dayOfWeek,
-      group: courseValueDto.group,
-      labGroup: courseValueDto.labGroup,
-      numberOfPeriods: courseValueDto.numberOfPeriods,
       courses: courseValueDto.courses,
+      template: courseValueDto.template,
     });
     return await this.courseValueRepository.save(newCourseValue);
   }
@@ -49,13 +40,8 @@ export class CourseValueService {
   async existsCourseValue(courseValueDto: CourseValueDto): Promise<boolean> {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
-        startPeriod: courseValueDto.startPeriod,
         lecture: courseValueDto.lecture,
         location: courseValueDto.location,
-        dayOfWeek: courseValueDto.dayOfWeek,
-        group: courseValueDto.group,
-        labGroup: courseValueDto.labGroup,
-        numberOfPeriods: courseValueDto.numberOfPeriods,
       },
     });
 

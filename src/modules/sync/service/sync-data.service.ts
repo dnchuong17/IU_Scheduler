@@ -33,10 +33,10 @@ import { CoursesDto } from '../../courses/dto/courses.dto';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CourseValueDto } from '../../courseValue/dto/courseValue.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
-import { SYNC_POOL_NAME, SYNC_QUEUE_NAME } from './sync-pool.config';
+import { SYNC_POOL_NAME } from './sync-pool.config';
 import { Queue } from 'bullmq';
-import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
-import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
+import { SyncRealTimeEntity } from '../entities/sync-real-time.entity';
+
 
 @Injectable()
 export class SyncDataService {
@@ -57,6 +57,7 @@ export class SyncDataService {
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
     @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
+    @InjectRepository(SyncRealTimeEntity) private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -188,18 +189,20 @@ export class SyncDataService {
     const startTime = new Date();
     startTime.setDate(startTime.getDate() - 7);
     const studentIds = await this.userRepo
-      .createQueryBuilder('studentUser')
+      .createQueryBuilder('studentUser')  // Declare the alias for 'studentUser'
       .innerJoin(
-        'scheduler_template',
+        'studentUser.scheduler',  // Use the 'scheduler' relationship from UserEntity
         'template',
-        'studentUser.schedule_template_id = template.scheduler_id',
+        'studentUser.id = template.userId'  // Assuming 'userId' is the foreign key in 'scheduler_template'
       )
       .where('template.is_main_template = :value', { value: true })
       .andWhere(
         '(template.lastsynctime < :date OR template.lastsynctime IS NULL)',
-        { date: startTime },
+        { date: startTime }
       )
+      .select('studentUser.id')  // Ensure you select the required fields
       .getMany();
+
     this.logger.debug(`Total found ${studentIds.length} studentIds`);
 
     const filerStudent = studentIds.filter((student) =>
@@ -217,6 +220,8 @@ export class SyncDataService {
         removeOnFail: true,
         jobId: userEntity.studentID,
       });
+      this.logger.debug('sync successfully');
+
     }
   }
   async getJobCount() {
@@ -354,6 +359,11 @@ export class SyncDataService {
     await this.createSyncEvent(syncReq);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
     return response.data;
+  }
+
+  async syncRealtime(referenceId: string) {
+    
+
   }
 
   async getSyncUser() {
