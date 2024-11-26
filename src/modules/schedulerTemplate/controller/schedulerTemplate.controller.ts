@@ -16,8 +16,8 @@ export class SchedulerTemplateController {
     return this.templateService.getTemplate(id);
   }
 
-  @Post('create/:id')
-  createTemplate(@Param('id') userId: number) {
-    return this.templateService.createTemplate(userId);
-  }
+  // @Post('create/:id')
+  // createTemplate(@Param('id') userId: number) {
+  // //   return this.templateService.createTemplate(userId);
+  // }
 }

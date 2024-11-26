@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { CoursePositionEntity } from '../../coursePosition/entity/coursePosition.entity';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Entity('scheduler_template')
 export class SchedulerTemplateEntity extends BaseEntity {
@@ -28,6 +29,9 @@ export class SchedulerTemplateEntity extends BaseEntity {
     (coursePositions) => coursePositions.scheduler,
   )
   coursePositions: CoursePositionEntity[];
+
+  @OneToMany(() => CourseValueEntity, (courseValues) => courseValues.template)
+  courseValues: CourseValueEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.scheduler)
   user: UserEntity;

@@ -8,14 +8,12 @@ import {
 } from 'typeorm';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { DeadlineEntity } from '../../deadline/entity/deadline.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 @Entity('course_value')
 export class CourseValueEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_value_id' })
   id: number;
-
-  @Column({ name: 'start_period', nullable: false })
-  startPeriod: number;
 
   @Column({ name: 'lecture', nullable: false })
   lecture: string;
@@ -23,20 +21,11 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'location', nullable: false })
   location: string;
 
-  @Column({ name: 'date' })
-  dayOfWeek: string;
-
-  @Column({ name: 'group', nullable: true })
-  group: number;
-
-  @Column({ name: 'lab_group' })
-  labGroup: number;
-
-  @Column({ name: 'no_periods', nullable: false, type: 'int' })
-  numberOfPeriods: number;
-
   @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
   courses: CoursesEntity;
+
+  @ManyToOne(() => SchedulerTemplateEntity, (template) => template.courseValues)
+  template: SchedulerTemplateEntity;
 
   @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)
   deadlines: DeadlineEntity[];

@@ -16,6 +16,8 @@ import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
 import { RedisHelper } from '../modules/redis/service/redis.service';
 import { KEY } from '../common/user.constant';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
+import { SchedulerTemplateDto } from '../modules/schedulerTemplate/dto/schedulerTemplate.dto';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +29,7 @@ export class AuthService {
     private readonly logger: TracingLoggerService,
     private readonly emailValidationHelper: EmailValidationHelper,
     private readonly redisHelper: RedisHelper,
+    private readonly schedulerService: ScheduleTemplateService,
   ) {
     logger.setContext(AuthService.name);
   }
@@ -52,7 +55,14 @@ export class AuthService {
         ...userDto,
         password: hashPassword,
       });
-      await this.userRepository.save(newUser);
+      const user = await this.userRepository.save(newUser);
+      const templateDto = plainToInstance(SchedulerTemplateDto, {
+        user: user,
+        isMainTemplate: true,
+        lastSyncTime: new Date(),
+        isSync: true,
+      });
+      await this.schedulerService.createTemplate(templateDto);
       return 'sign up successfully';
     } catch (error) {
       throw new BadRequestException(error);

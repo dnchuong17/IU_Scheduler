@@ -17,6 +17,8 @@ import { EmailValidationHelper } from '../modules/validation/service/email-valid
 import { RedisModule } from '../modules/redis/redis.module';
 import { RedisHelper } from '../modules/redis/service/redis.service';
 import * as process from 'process';
+import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
+import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/entity/schedulerTemplate.entity';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import * as process from 'process';
       secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },
     }),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, SchedulerTemplateEntity]),
   ],
   controllers: [AuthController],
   providers: [
@@ -40,6 +42,7 @@ import * as process from 'process';
     TracingLoggerService,
     EmailValidationHelper,
     RedisHelper,
+    ScheduleTemplateService,
   ],
   exports: [AuthService],
 })

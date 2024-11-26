@@ -1,6 +1,6 @@
 import { UserEntity } from '../../user/entity/user.entity';
 
-export class schedulerTemplateDto {
+export class SchedulerTemplateDto {
   isSynced?: boolean;
   isMainTemplate?: boolean;
   lastSyncTime?: Date;

@@ -6,8 +6,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
-import { DeadlineConstant, DeadlineType } from '../../../common/deadline.constant';
+import { DeadlineType } from '../../../common/deadline.constant';
 import { UserEntity } from '../../user/entity/user.entity';
+import { DeadlineConstant } from '../../../common/deadline.constant';
 
 @Entity('deadline')
 export class DeadlineEntity extends BaseEntity {

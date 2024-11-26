@@ -5,7 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { plainToInstance } from 'class-transformer';
-import { schedulerTemplateDto } from '../dto/schedulerTemplate.dto';
+import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -27,17 +27,15 @@ export class ScheduleTemplateService {
     return template.length > 0;
   }
 
-  async createTemplate(userId: number) {
-    const query = 'SELECT * FROM student_users WHERE id = $1';
-    const user = await this.datasource.query(query, [userId]);
-    if (user.length === 0) {
-      throw new BadRequestException(`Not found user with ID ${userId}`);
-    }
+  async createTemplate(templateDto: SchedulerTemplateDto) {
     this.logger.debug('create template');
-    const newTemplate =await this.schedulerTemplateRepo.create({
-      user: user[0],
+    const newTemplate = await this.schedulerTemplateRepo.create({
+      isSync: templateDto.isSynced,
+      isMain: templateDto.isMainTemplate,
+      lastSyncTime: templateDto.lastSyncTime,
+      user: templateDto.user,
     });
-    this.logger.debug('save template')
+    this.logger.debug('save template');
     return await this.schedulerTemplateRepo.save(newTemplate);
   }
 

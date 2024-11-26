@@ -22,6 +22,5 @@ async function bootstrap() {
   app.setGlobalPrefix('/api');
   const logger = new Logger();
   logger.log('Server is running in http://localhost:3000.');
-
 }
 bootstrap();

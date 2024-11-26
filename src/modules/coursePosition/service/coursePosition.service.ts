@@ -14,6 +14,7 @@ export class CoursePositionService {
     const newPos = await this.coursePositionRepository.create({
       days: coursePosDto.days,
       periods: coursePosDto.periods,
+      startPeriod: coursePosDto.startPeriod,
       scheduler: coursePosDto.scheduler,
     });
     return await this.coursePositionRepository.save(newPos);
