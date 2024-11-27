@@ -28,48 +28,56 @@ export class ScheduleTemplateService {
   ) {}
 
   async findTemplateWithId(id: number): Promise<boolean> {
-    const query = `
+    try {
+      const query = `
       SELECT *
       FROM scheduler_template
       WHERE scheduler_template.scheduler_id = $1
     `;
-    const template = await this.datasource.query(query, [id]);
-    return template.length > 0;
+      const template = await this.datasource.query(query, [id]);
+      return template.length > 0;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching template with ID ${id}: ${error.message}`,
+      );
+      throw new BadRequestException('Could not fetch template');
+    }
   }
 
-  async findTemplateForCreateScheduler(studentId: string, templateId: string) {
+  async findTemplateForCreateScheduler(studentId: string, templateId: number) {
+    // Find student by Student ID, if null => throw error
     const user = await this.userService.findUserWithUID(studentId);
     if (!user) {
+      this.logger.error(`[ERROR] User with ID ${studentId} not found!`);
       throw new BadRequestException('user not found');
     }
+    // If templateID is null => create new Template
     if (!templateId) {
       const templateDto = plainToInstance(SchedulerTemplateDto, {
         user: user,
       });
       return await this.createTemplate(templateDto);
     }
-
-    // neu ko co id => tao moi, co id => update
-    // tim template do ra roi tra ve template do, khong tim ra => null
   }
 
   async createScheduler(createSchedulerDto: CreateSchedulerDto) {
     // Check null
     const { studentId, templateId, listOfCourses } = createSchedulerDto;
-
+    // If studentID is null => error
     if (!studentId) {
+      this.logger.error(`[ERROR] Student with ID ${studentId} not found!`);
       throw new BadRequestException('studentId is required');
     }
-
+    // If we can not find template by template id => throw error
     const newTemplate = await this.findTemplateForCreateScheduler(
       studentId,
       templateId,
     );
-
     if (!newTemplate) {
+      this.logger.error(`[ERROR] template with ID ${templateId} not found!`);
       throw new BadRequestException('template not found');
     }
-
+    // Create new template
     for (const course of listOfCourses) {
       const {
         courseID,
@@ -81,24 +89,27 @@ export class ScheduleTemplateService {
         location,
         lecturer,
         isActive,
+        isDeleted,
       } = course;
-
-      if(!course.courseID) {
+      // If courseID = null (no equivalent course in database) => create new course, new coursePosition
+      if (!courseID) {
         const courses = await this.coursesService.createCourse({
-          credits: course.credits,
-          courseCode: course.courseID,
-          name: course.courseName,
+          credits: credits,
+          courseCode: courseID,
+          name: courseName,
+        });
+        await this.coursePositonService.createCoursePos({
+          days: date,
+          periods: periodsCount,
+          startPeriod: startPeriod,
+          scheduler: newTemplate,
+          courses: courses,
         });
       }
-      await this.coursePositonService.createCoursePos({
-        days: course.date,
-        periods: course.periodsCount,
-        startPeriod: course.startPeriod,
-        scheduler: newTemplate,
-        courses: courses,
-      });
+      // Update template
     }
   }
+
   async createTemplate(templateDto: SchedulerTemplateDto) {
     this.logger.debug('create template');
     const newTemplate = this.schedulerTemplateRepo.create({

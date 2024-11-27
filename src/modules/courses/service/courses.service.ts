@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CoursesDto } from '../dto/courses.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,6 +18,7 @@ export class CoursesService {
   ) {
     this.logger.setContext(CoursesService.name);
   }
+
   async getAllCourses() {
     const response = await this.coursesRepository.find();
     const courseCodes = response.map((courses) => courses.courseCode);
@@ -37,5 +42,23 @@ export class CoursesService {
 
   async getCourses() {
     return await this.coursesRepository.find();
+  }
+
+  async findCourseByCourseCode(coursesCode: string) {
+    try {
+      const course = await this.coursesRepository.findOne({
+        where: { courseCode: coursesCode },
+      });
+      if (!course) {
+        this.logger.error(
+          `[GET COURSE BY ID] Course with ID ${coursesCode} not found`,
+        );
+        throw new NotFoundException(`Course with ID ${coursesCode} not found`);
+      }
+      return course;
+    } catch (error) {
+      this.logger.error('[GET COURSE BY ID] Error fetching course by ID');
+      throw new BadRequestException('Failed to fetch course by ID');
+    }
   }
 }

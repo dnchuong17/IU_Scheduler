@@ -9,4 +9,5 @@ export class CreateTemplateItemDto {
   location: string;
   lecturer: string;
   isActive: boolean;
+  isDeleted: boolean;
 }
