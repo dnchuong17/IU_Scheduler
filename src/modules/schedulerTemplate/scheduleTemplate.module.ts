@@ -6,6 +6,7 @@ import { TracingLoggerModule } from '../../logger/tracinglogger.module';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
 import { UserModule } from '../user/user.module';
 import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
+import { UserService } from '../user/service/user.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
     TracingLoggerModule,
   ],
   controllers: [SchedulerTemplateController],
-  providers: [ScheduleTemplateService, TracingLoggerService],
+  providers: [ScheduleTemplateService, TracingLoggerService, UserService],
   exports: [ScheduleTemplateService, TypeOrmModule],
 })
 export class ScheduleTemplateModule {}

@@ -4,7 +4,7 @@ import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedule
 export class CoursePositionDto {
   @IsNumber()
   @IsNotEmpty()
-  days: number;
+  days: string;
 
   @IsNumber()
   @IsNotEmpty()
