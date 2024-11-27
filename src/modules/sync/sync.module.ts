@@ -53,6 +53,7 @@ import { TracingLoggerModule } from '../../logger/tracinglogger.module';
     RedisHelper,
     ConfigService,
     SyncDataService,
+    CoursePositionService,
     {
       provide: SYNC_DATA_SERVICE,
       useClass: SyncDataService,

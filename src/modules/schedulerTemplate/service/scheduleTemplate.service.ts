@@ -1,10 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { plainToInstance } from 'class-transformer';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 @Injectable()
 export class ScheduleTemplateService {
@@ -50,5 +49,12 @@ export class ScheduleTemplateService {
 
     const schedule = this.datasource.query(query, [id]);
     return schedule;
+  }
+
+  async getTemplateBySID(id: string) {
+    const query =
+      'SELECT * FROM scheduler_template LEFT JOIN student_users ON scheduler_template.userId=student_user.id WHERE is_main_template=true AND student_id = $1';
+    const template = this.datasource.query(query, [id]);
+    return template[0];
   }
 }

@@ -40,8 +40,10 @@ export class CourseValueService {
   async existsCourseValue(courseValueDto: CourseValueDto): Promise<boolean> {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
+        courses: courseValueDto.courses,
         lecture: courseValueDto.lecture,
         location: courseValueDto.location,
+        template: courseValueDto.template,
       },
     });
 

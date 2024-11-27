@@ -1,5 +1,6 @@
 import {
-  BadRequestException, forwardRef,
+  BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -40,7 +41,7 @@ import { SyncRealtimeRequestDto } from '../dto/sync-realtime-request.dto';
 import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
-
+import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 
 @Injectable()
 export class SyncDataService {
@@ -63,9 +64,11 @@ export class SyncDataService {
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
     @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
-    @InjectRepository(SyncRealTimeEntity) private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
+    @InjectRepository(SyncRealTimeEntity)
+    private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
     private readonly dataSource: DataSource,
     private readonly schedulerService: ScheduleTemplateService,
+    private readonly coursePosService: CoursePositionService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -197,18 +200,18 @@ export class SyncDataService {
     const startTime = new Date();
     startTime.setDate(startTime.getDate() - 7);
     const studentIds = await this.userRepo
-      .createQueryBuilder('studentUser')  // Declare the alias for 'studentUser'
+      .createQueryBuilder('studentUser') // Declare the alias for 'studentUser'
       .innerJoin(
-        'studentUser.scheduler',  // Use the 'scheduler' relationship from UserEntity
+        'studentUser.scheduler', // Use the 'scheduler' relationship from UserEntity
         'template',
-        'studentUser.id = template.userId'  // Assuming 'userId' is the foreign key in 'scheduler_template'
+        'studentUser.id = template.userId', // Assuming 'userId' is the foreign key in 'scheduler_template'
       )
       .where('template.is_main_template = :value', { value: true })
       .andWhere(
         '(template.lastsynctime < :date OR template.lastsynctime IS NULL)',
-        { date: startTime }
+        { date: startTime },
       )
-      .select('studentUser.id')  // Ensure you select the required fields
+      .select('studentUser.id') // Ensure you select the required fields
       .getMany();
 
     this.logger.debug(`Total found ${studentIds.length} studentIds`);
@@ -229,7 +232,6 @@ export class SyncDataService {
         jobId: userEntity.studentID,
       });
       this.logger.debug('sync successfully');
-
     }
   }
   async getJobCount() {
@@ -253,7 +255,7 @@ export class SyncDataService {
       return;
     }
     const courses = await this.courseService.getCourses();
-      const courseCodeMap = new Map<string, CoursesEntity>();
+    const courseCodeMap = new Map<string, CoursesEntity>();
 
     courses.forEach((course) => {
       const baseCourseCode = course.courseCode
@@ -273,6 +275,8 @@ export class SyncDataService {
     );
     const $ = cheerio.load(response.data);
     const allCourseDetails = [];
+    const allCoursePositions: CoursePositionDto[] = [];
+    const template = await this.schedulerService.getTemplateBySID(id);
 
     $('td[onmouseover^="ddrivetip"]').each((index, element) => {
       const onmouseoverAttr = $(element).attr('onmouseover');
@@ -311,7 +315,6 @@ export class SyncDataService {
           const location = params[5].replace(/^'|'$/g, '');
           const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
           const lecture = params[8].replace(/^'|'$/g, '');
-    
 
           const startPeriod = startPeriodStr
             ? parseInt(startPeriodStr, 10)
@@ -332,41 +335,52 @@ export class SyncDataService {
             days: dayOfWeek,
             periods: numberOfPeriods,
             startPeriod: startPeriod,
-            scheduler: SchedulerTemplateEntity,
-          })
+            scheduler: template,
+          });
+          allCoursePositions.push(coursePosDto);
         }
-
       }
     });
-    let newCourseValueCreated = false;
-    this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
-    for (const courseValueDto of allCourseDetails) {
-      const courseExists =
-        await this.courseValueService.existsCourseValue(courseValueDto);
+    for (const coursePosDto of allCourseDetails) {
+      const coursePosExists =
+        await this.coursePosService.existsCoursePosition(coursePosDto);
 
-      if (courseExists) {
-        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+      if (coursePosExists) {
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
         continue;
       }
-      await this.courseValueService.createCourseValue(courseValueDto);
-      newCourseValueCreated = true;
-      this.logger.debug(
-        '[SYNC DATA FROM SCHEDULE] Create course value successfully',
-      );
-      console.log(courses);
+
+      await this.coursePosService.createCoursePos(coursePosDto);
+      let newCourseValueCreated = false;
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+      for (const courseValueDto of allCourseDetails) {
+        const courseExists =
+          await this.courseValueService.existsCourseValue(courseValueDto);
+
+        if (courseExists) {
+          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+          continue;
+        }
+        await this.courseValueService.createCourseValue(courseValueDto);
+        newCourseValueCreated = true;
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] Create course value successfully',
+        );
+        console.log(courses);
+      }
+      syncReq.status = newCourseValueCreated;
+      syncReq.finishTime = new Date();
+      syncReq.failReason = newCourseValueCreated
+        ? null
+        : SyncFailReason.EXISTED_COURSE_VALUE;
+      await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
+      return response.data;
     }
-    syncReq.status = newCourseValueCreated;
-    syncReq.finishTime = new Date();
-    syncReq.failReason = newCourseValueCreated
-      ? null
-      : SyncFailReason.EXISTED_COURSE_VALUE;
-    await this.createSyncEvent(syncReq);
-    this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
-    return response.data;
   }
 
   async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
-    console.log("Received request:", syncRealtimeReq);
+    console.log('Received request:', syncRealtimeReq);
     const event = await this.syncRealtimeRepo.create({
       syncEvent: syncRealtimeReq.syncRealtimeEvent,
       isNew: syncRealtimeReq.isNew,
@@ -376,11 +390,22 @@ export class SyncDataService {
   }
 
   async processingSyncRealtime() {
-      const takeUID = 'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
-      const UID =  await this.dataSource.query(takeUID,[SYNC_EVENT_FROM_SCHEDULE]);
-      const id = UID[0].reference_id;
-      this.logger.debug(`[SYNC REALTIME] Sync schedule for user: ${id}`);
-      return await this.syncDataFromSchedule(id);
+    const takeUID =
+      'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
+    const UID = await this.dataSource.query(takeUID, [
+      SYNC_EVENT_FROM_SCHEDULE,
+    ]);
+    const id = UID[0].reference_id;
+    this.logger.debug(`[SYNC REALTIME] Sync schedule for user: ${id}`);
+    return await this.syncDataFromSchedule(id);
+  }
+
+  async markSyncAsProcessed(referenceId: string) {
+    await this.syncRealtimeRepo.update(
+      { referenceId, isNew: true }, // Find new sync events by referenceId
+      { isNew: false }, // Mark as processed
+    );
+    this.logger.debug('[SYNC REALTIME] Marked sync event as processed');
   }
 
   async getSyncUser() {

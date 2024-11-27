@@ -25,6 +25,8 @@ import { UserEntity } from '../modules/user/entity/user.entity';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
+import { CoursePositionService } from "../modules/coursePosition/service/coursePosition.service";
+import { CoursePositionEntity } from "../modules/coursePosition/entity/coursePosition.entity";
 
 @Module({
   imports: [
@@ -39,7 +41,14 @@ import { AuthController } from './auth.controller';
       secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },
     }),
-    TypeOrmModule.forFeature([UserEntity, SchedulerTemplateEntity, SyncRealTimeEntity, SyncEventEntity, CourseValueEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      SchedulerTemplateEntity,
+      SyncRealTimeEntity,
+      SyncEventEntity,
+      CourseValueEntity,
+      CoursePositionEntity,
+    ]),
   ],
   controllers: [AuthController],
   providers: [
@@ -57,7 +66,7 @@ import { AuthController } from './auth.controller';
     SyncDataService,
     CoursesService,
     CourseValueService,
-
+    CoursePositionService,
   ],
   exports: [AuthService],
 })

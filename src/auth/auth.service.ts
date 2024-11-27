@@ -1,5 +1,7 @@
 import {
-  BadRequestException, forwardRef, Inject,
+  BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -68,9 +70,11 @@ export class AuthService {
         lastSyncTime: new Date(),
         isSync: true,
       });
-      this.logger.debug(`[SIGN UP] Create main template for user: ${userDto.studentID}`);
+      this.logger.debug(
+        `[SIGN UP] Create main template for user: ${userDto.studentID}`,
+      );
       await this.schedulerService.createTemplate(templateDto);
-     this.logger.debug('[SIGN UP] Sync realtime event');
+      this.logger.debug('[SIGN UP] Sync realtime event');
       const syncReq = new SyncRealtimeRequestDto();
       syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
       syncReq.isNew = true;
