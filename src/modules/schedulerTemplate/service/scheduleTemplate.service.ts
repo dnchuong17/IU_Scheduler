@@ -5,7 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
+import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(

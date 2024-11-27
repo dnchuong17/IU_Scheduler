@@ -29,6 +29,6 @@ export class CoursePositionEntity extends BaseEntity {
   )
   scheduler: SchedulerTemplateEntity;
 
-  @OneToMany(() => CoursesEntity, (course) => course.coursePosition)
-  courses: CoursesEntity[];
+  @ManyToOne(() => CoursesEntity, (course) => course.coursePosition)
+  courses: CoursesEntity;
 }

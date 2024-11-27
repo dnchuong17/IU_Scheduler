@@ -21,11 +21,16 @@ import { RedisModule } from '../redis/redis.module';
 import { SYNC_DATA_SERVICE } from './utils/sync.constant';
 import { ModuleRef } from '@nestjs/core';
 import { SyncRealTimeEntity } from './entities/sync-real-time.entity';
+import { TracingLoggerService } from '../../logger/tracing-logger.service';
+import { RedisHelper } from '../redis/service/redis.service';
+import { ConfigService } from '@nestjs/config';
+import { TracingLoggerModule } from '../../logger/tracinglogger.module';
 
 @Module({
   imports: [
     RedisModule,
     HttpModule,
+    TracingLoggerModule,
     TypeOrmModule.forFeature([
       SyncEventEntity,
       UserEntity,
@@ -44,6 +49,10 @@ import { SyncRealTimeEntity } from './entities/sync-real-time.entity';
     ScheduleTemplateService,
     CoursesService,
     CourseValueService,
+    TracingLoggerService,
+    RedisHelper,
+    ConfigService,
+    SyncDataService,
     {
       provide: SYNC_DATA_SERVICE,
       useClass: SyncDataService,

@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  BadRequestException, forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -21,7 +21,7 @@ import { RedisHelper } from '../../redis/service/redis.service';
 import { SessionIdSyncDto } from '../dto/sync.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SyncEventEntity } from '../entities/sync-event.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { SyncRequestDto } from '../dto/sync-request.dto';
 import { UserService } from '../../user/service/user.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -36,6 +36,10 @@ import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SYNC_POOL_NAME } from './sync-pool.config';
 import { Queue } from 'bullmq';
 import { SyncRealTimeEntity } from '../entities/sync-real-time.entity';
+import { SyncRealtimeRequestDto } from '../dto/sync-realtime-request.dto';
+import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
+import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
 
 
 @Injectable()
@@ -51,13 +55,17 @@ export class SyncDataService {
     @InjectRepository(SyncEventEntity)
     private readonly syncRepo: Repository<SyncEventEntity>,
     private readonly userService: UserService,
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    @Inject(forwardRef(() => CoursesService))
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
     @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
     @InjectRepository(SyncRealTimeEntity) private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
+    private readonly dataSource: DataSource,
+    private readonly schedulerService: ScheduleTemplateService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -231,6 +239,7 @@ export class SyncDataService {
   async syncDataFromSchedule(id: string) {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
+    console.log(checkKey);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
     const syncReq: SyncRequestDto = <SyncRequestDto>{
       syncEvent: SYNC_EVENT_FROM_SCHEDULE,
@@ -244,7 +253,7 @@ export class SyncDataService {
       return;
     }
     const courses = await this.courseService.getCourses();
-    const courseCodeMap = new Map<string, CoursesEntity>();
+      const courseCodeMap = new Map<string, CoursesEntity>();
 
     courses.forEach((course) => {
       const baseCourseCode = course.courseCode
@@ -297,17 +306,12 @@ export class SyncDataService {
 
           const course = courseCodeMap.get(baseCourseCode);
           // Extracting the necessary values from params
-          const groupInfo = params[2];
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
           const location = params[5].replace(/^'|'$/g, '');
           const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
           const lecture = params[8].replace(/^'|'$/g, '');
-
-          // Extract group number and labGroup number
-
-          const groupMatch = groupInfo.match(/nhóm (\d+)/i);
-          const labGroupMatch = groupInfo.match(/tổ thực hành (\d+)/i);
+    
 
           const startPeriod = startPeriodStr
             ? parseInt(startPeriodStr, 10)
@@ -315,24 +319,23 @@ export class SyncDataService {
           const numberOfPeriods = numberOfPeriodsStr
             ? parseInt(numberOfPeriodsStr, 10)
             : null;
-
-          const group = groupMatch ? parseInt(groupMatch[1], 10) : null;
-          const labGroup = labGroupMatch
-            ? parseInt(labGroupMatch[1], 10)
-            : null;
           this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
           const courseValueDto = plainToInstance(CourseValueDto, {
-            startPeriod,
             lecture,
             location,
-            dayOfWeek,
-            group,
-            labGroup,
             numberOfPeriods,
             courses: course,
           });
           allCourseDetails.push(courseValueDto);
+
+          const coursePosDto = plainToInstance(CoursePositionDto, {
+            days: dayOfWeek,
+            periods: numberOfPeriods,
+            startPeriod: startPeriod,
+            scheduler: SchedulerTemplateEntity,
+          })
         }
+
       }
     });
     let newCourseValueCreated = false;
@@ -350,6 +353,7 @@ export class SyncDataService {
       this.logger.debug(
         '[SYNC DATA FROM SCHEDULE] Create course value successfully',
       );
+      console.log(courses);
     }
     syncReq.status = newCourseValueCreated;
     syncReq.finishTime = new Date();
@@ -361,9 +365,22 @@ export class SyncDataService {
     return response.data;
   }
 
-  async syncRealtime(referenceId: string) {
-    
+  async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
+    console.log("Received request:", syncRealtimeReq);
+    const event = await this.syncRealtimeRepo.create({
+      syncEvent: syncRealtimeReq.syncRealtimeEvent,
+      isNew: syncRealtimeReq.isNew,
+      referenceId: syncRealtimeReq.referenceId,
+    });
+    return await this.syncRealtimeRepo.save(event);
+  }
 
+  async processingSyncRealtime() {
+      const takeUID = 'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
+      const UID =  await this.dataSource.query(takeUID,[SYNC_EVENT_FROM_SCHEDULE]);
+      const id = UID[0].reference_id;
+      this.logger.debug(`[SYNC REALTIME] Sync schedule for user: ${id}`);
+      return await this.syncDataFromSchedule(id);
   }
 
   async getSyncUser() {

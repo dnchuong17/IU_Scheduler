@@ -1,23 +1,27 @@
 import {
-  BadRequestException,
+  BadRequestException, forwardRef, Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from '../modules/user/service/user.service';
 import { UserDto } from '../modules/user/dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '../modules/user/entity/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SigninDto } from '../modules/user/dto/signin.dto';
 import { JwtService } from '@nestjs/jwt';
 import { plainToInstance } from 'class-transformer';
-import { TracingLoggerService } from '../logger/tracing-logger.service';
+
+import { SyncDataService } from '../modules/sync/service/sync-data.service';
+import { SchedulerTemplateDto } from '../modules/schedulerTemplate/dto/scheduler-Template.dto';
+import { UserService } from '../modules/user/service/user.service';
+import { UserEntity } from '../modules/user/entity/user.entity';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
 import { RedisHelper } from '../modules/redis/service/redis.service';
 import { KEY } from '../common/user.constant';
 import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
-import { SchedulerTemplateDto } from '../modules/schedulerTemplate/dto/schedulerTemplate.dto';
+import { SYNC_EVENT_FROM_SCHEDULE } from '../modules/sync/utils/sync.constant';
+import { SyncRealtimeRequestDto } from '../modules/sync/dto/sync-realtime-request.dto';
+import { TracingLoggerService } from '../logger/tracing-logger.service';
 
 @Injectable()
 export class AuthService {
@@ -30,18 +34,20 @@ export class AuthService {
     private readonly emailValidationHelper: EmailValidationHelper,
     private readonly redisHelper: RedisHelper,
     private readonly schedulerService: ScheduleTemplateService,
+    @Inject(forwardRef(() => SyncDataService))
+    private readonly syncDataService: SyncDataService,
   ) {
     logger.setContext(AuthService.name);
   }
 
   async signup(userDto: UserDto) {
     this.logger.debug('sign up');
-    const existedUser = await this.userService.findAccountWithEmail(
-      userDto.email,
-    );
-    if (existedUser) {
-      throw new BadRequestException('Email already in use');
-    }
+    // const existedUser = await this.userService.findAccountWithEmail(
+    //   userDto.email,
+    // );
+    // if (existedUser) {
+    //   throw new BadRequestException('Email already in use');
+    // }
     const checkEmailResult = await this.emailValidationHelper.validateEmail(
       userDto.email,
     );
@@ -62,7 +68,15 @@ export class AuthService {
         lastSyncTime: new Date(),
         isSync: true,
       });
+      this.logger.debug(`[SIGN UP] Create main template for user: ${userDto.studentID}`);
       await this.schedulerService.createTemplate(templateDto);
+     this.logger.debug('[SIGN UP] Sync realtime event');
+      const syncReq = new SyncRealtimeRequestDto();
+      syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
+      syncReq.isNew = true;
+      syncReq.referenceId = userDto.studentID;
+
+      await this.syncDataService.syncRealtime(syncReq);
       return 'sign up successfully';
     } catch (error) {
       throw new BadRequestException(error);
