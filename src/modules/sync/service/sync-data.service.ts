@@ -274,9 +274,10 @@ export class SyncDataService {
       },
     );
     const $ = cheerio.load(response.data);
+    const template = await this.schedulerService.getTemplateBySID(id);
+    console.log(template);
     const allCourseDetails = [];
     const allCoursePositions: CoursePositionDto[] = [];
-    const template = await this.schedulerService.getTemplateBySID(id);
 
     $('td[onmouseover^="ddrivetip"]').each((index, element) => {
       const onmouseoverAttr = $(element).attr('onmouseover');
@@ -297,7 +298,6 @@ export class SyncDataService {
             : '';
           baseCourseCode = baseCourseCode.replace(/'/g, ''); // Remove single quotes if any
 
-          // Compare extracted course code with map
           this.logger.debug(
             `[SYNC DATA FROM SCHEDULE] Comparing extracted course code: ${baseCourseCode} against map.`,
           );
@@ -309,7 +309,6 @@ export class SyncDataService {
           }
 
           const course = courseCodeMap.get(baseCourseCode);
-          // Extracting the necessary values from params
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
           const location = params[5].replace(/^'|'$/g, '');
@@ -323,25 +322,28 @@ export class SyncDataService {
             ? parseInt(numberOfPeriodsStr, 10)
             : null;
           this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
-          const courseValueDto = plainToInstance(CourseValueDto, {
-            lecture,
-            location,
-            numberOfPeriods,
-            courses: course,
-          });
-          allCourseDetails.push(courseValueDto);
-
           const coursePosDto = plainToInstance(CoursePositionDto, {
             days: dayOfWeek,
             periods: numberOfPeriods,
             startPeriod: startPeriod,
             scheduler: template,
+            courses: course,
           });
+          console.log(coursePosDto.scheduler);
           allCoursePositions.push(coursePosDto);
+          const courseValueDto = plainToInstance(CourseValueDto, {
+            lecture,
+            location,
+            numberOfPeriods,
+            courses: course,
+            scheduler: template,
+          });
+          allCourseDetails.push(courseValueDto);
         }
       }
     });
-    for (const coursePosDto of allCourseDetails) {
+    console.log(allCoursePositions);
+    for (const coursePosDto of allCoursePositions) {
       const coursePosExists =
         await this.coursePosService.existsCoursePosition(coursePosDto);
 
@@ -349,9 +351,16 @@ export class SyncDataService {
         this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
         continue;
       }
+      console.log(coursePosDto);
 
-      await this.coursePosService.createCoursePos(coursePosDto);
       let newCourseValueCreated = false;
+      for (const coursePosDto of allCoursePositions) {
+        const coursePosExists =
+          await this.coursePosService.existsCoursePosition(coursePosDto);
+        if (coursePosExists) continue;
+      }
+      await this.coursePosService.createCoursePos(coursePosDto);
+
       this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
       for (const courseValueDto of allCourseDetails) {
         const courseExists =
@@ -375,8 +384,8 @@ export class SyncDataService {
         : SyncFailReason.EXISTED_COURSE_VALUE;
       await this.createSyncEvent(syncReq);
       this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
-      return response.data;
     }
+    return response.data;
   }
 
   async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
@@ -390,20 +399,20 @@ export class SyncDataService {
   }
 
   async processingSyncRealtime() {
-    const takeUID =
+    const query =
       'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
-    const UID = await this.dataSource.query(takeUID, [
-      SYNC_EVENT_FROM_SCHEDULE,
-    ]);
-    const id = UID[0].reference_id;
-    this.logger.debug(`[SYNC REALTIME] Sync schedule for user: ${id}`);
-    return await this.syncDataFromSchedule(id);
+    const UID = await this.dataSource.query(query, [SYNC_EVENT_FROM_SCHEDULE]);
+    for (const { reference_id } of UID) {
+      console.log(reference_id);
+      await this.syncDataFromSchedule(reference_id);
+      await this.markSyncAsProcessed(reference_id);
+    }
   }
 
   async markSyncAsProcessed(referenceId: string) {
     await this.syncRealtimeRepo.update(
-      { referenceId, isNew: true }, // Find new sync events by referenceId
-      { isNew: false }, // Mark as processed
+      { referenceId, isNew: true },
+      { isNew: false },
     );
     this.logger.debug('[SYNC REALTIME] Marked sync event as processed');
   }

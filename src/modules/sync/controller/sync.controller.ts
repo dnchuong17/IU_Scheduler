@@ -55,7 +55,7 @@ export class SyncController {
   }
 
   @Post('syncRealtime')
-  syncRealTime(){
+  syncRealTime() {
     return this.syncService.processingSyncRealtime();
   }
 

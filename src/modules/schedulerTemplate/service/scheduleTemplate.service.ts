@@ -51,10 +51,16 @@ export class ScheduleTemplateService {
     return schedule;
   }
 
-  async getTemplateBySID(id: string) {
-    const query =
-      'SELECT * FROM scheduler_template LEFT JOIN student_users ON scheduler_template.userId=student_user.id WHERE is_main_template=true AND student_id = $1';
-    const template = this.datasource.query(query, [id]);
-    return template[0];
+  async getTemplateBySID(sid: string) {
+    return await this.datasource
+      .getRepository(SchedulerTemplateEntity)
+      .createQueryBuilder('scheduler_template')
+      .leftJoinAndSelect('scheduler_template.user', 'user') // join bảng 'student_users'
+      .where('scheduler_template.is_main_template = true')
+      .andWhere('user.studentID = :sid', { sid })
+      .getOne(); // chỉ lấy 1 kết quả duy nhất (nếu có)
   }
+
+
+
 }

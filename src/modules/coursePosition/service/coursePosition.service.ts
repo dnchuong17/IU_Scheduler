@@ -21,13 +21,15 @@ export class CoursePositionService {
   }
 
   async existsCoursePosition(coursePosDto: CoursePositionDto) {
-    return await this.coursePositionRepository.findOne({
+    const coursePos = await this.coursePositionRepository.findOne({
       where: {
         days: coursePosDto.days,
         periods: coursePosDto.periods,
         startPeriod: coursePosDto.startPeriod,
         scheduler: coursePosDto.scheduler,
+        courses: coursePosDto.courses,
       },
     });
+    return !!coursePos;
   }
 }

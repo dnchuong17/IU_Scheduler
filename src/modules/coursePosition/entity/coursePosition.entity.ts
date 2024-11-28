@@ -14,7 +14,7 @@ export class CoursePositionEntity extends BaseEntity {
   id: number;
 
   @Column({ name: 'days_in_week', nullable: false })
-  days: number;
+  days: string;
 
   @Column({ name: 'start_period' })
   startPeriod: number;

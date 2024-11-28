@@ -46,7 +46,6 @@ export class CourseValueService {
         template: courseValueDto.template,
       },
     });
-
     return !!existingValue; // Returns true if a match is found
   }
 }
