@@ -30,20 +30,20 @@ export class CourseValueService {
   async createCourseValue(courseValueDto: CourseValueDto) {
     const newCourseValue = await this.courseValueRepository.create({
       lecture: courseValueDto.lecture,
-      location: courseValueDto.location,
       courses: courseValueDto.courses,
-      template: courseValueDto.template,
+      location: courseValueDto.location,
+      scheduler: courseValueDto.template,
     });
     return await this.courseValueRepository.save(newCourseValue);
   }
 
-  async existsCourseValue(courseValueDto: CourseValueDto): Promise<boolean> {
+  async existsCourseValue(courseValueDto: CourseValueDto){
     const existingValue = await this.courseValueRepository.findOne({
       where: {
         courses: courseValueDto.courses,
         lecture: courseValueDto.lecture,
         location: courseValueDto.location,
-        template: courseValueDto.template,
+        scheduler: courseValueDto.template,
       },
     });
     return !!existingValue; // Returns true if a match is found
