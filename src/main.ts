@@ -6,7 +6,7 @@ import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors();
   await app.listen(3000);
   app.use(helmet());
