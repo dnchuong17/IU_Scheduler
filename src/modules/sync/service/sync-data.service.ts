@@ -389,7 +389,6 @@ export class SyncDataService {
   }
 
   async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
-    console.log('Received request:', syncRealtimeReq);
     const event = await this.syncRealtimeRepo.create({
       syncEvent: syncRealtimeReq.syncRealtimeEvent,
       isNew: syncRealtimeReq.isNew,

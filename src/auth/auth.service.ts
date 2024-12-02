@@ -44,12 +44,12 @@ export class AuthService {
 
   async signup(userDto: UserDto) {
     this.logger.debug('sign up');
-    // const existedUser = await this.userService.findAccountWithEmail(
-    //   userDto.email,
-    // );
-    // if (existedUser) {
-    //   throw new BadRequestException('Email already in use');
-    // }
+    const existedUser = await this.userService.findAccountWithEmail(
+      userDto.email,
+    );
+    if (existedUser) {
+      throw new BadRequestException('Email already in use');
+    }
     const checkEmailResult = await this.emailValidationHelper.validateEmail(
       userDto.email,
     );
