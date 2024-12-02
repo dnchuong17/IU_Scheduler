@@ -8,13 +8,19 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.enableCors();
-  await app.listen(3000);
   app.use(helmet());
   app.use(cookieParser());
-  app.use(TracingLoggerMiddleware);
   app.setGlobalPrefix('/api');
+  app.enableCors({
+    origin: 'http://localhost:5173', // Hoặc '*' để cho phép tất cả
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Nếu cần gửi cookies
+  });
+  await app.listen(3000);
   const logger = new Logger();
+  app.use(TracingLoggerMiddleware);
+
   logger.log('Server is running in http://localhost:3000.');
+
 }
 bootstrap();

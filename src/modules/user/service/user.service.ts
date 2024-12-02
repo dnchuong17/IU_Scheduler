@@ -19,6 +19,7 @@ export class UserService {
   async findAccountWithEmail(email: string) {
     this.logger.debug(`[FIND USER]-Find user via email ${email}`);
     const cacheUser = await this.redisHelper.get(email);
+    console.log(cacheUser);
     if (cacheUser) {
       this.logger.debug('Found user from cache');
       return JSON.parse(cacheUser);

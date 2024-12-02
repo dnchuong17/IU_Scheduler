@@ -101,11 +101,11 @@ export class AuthService {
   }
 
   async signIn(signIn: SigninDto) {
-    const isSignIn = await this.validateUser(signIn.username, signIn.password);
+    const isSignIn = await this.validateUser(signIn.email, signIn.password);
     if (isSignIn) {
-      const user = await this.userService.findAccountWithEmail(signIn.username);
+      const user = await this.userService.findAccountWithEmail(signIn.email);
       const payload = {
-        username: signIn.username,
+        username: signIn.email,
         sub: {
           name: user.name,
           sid: user.studentID,
@@ -129,12 +129,12 @@ export class AuthService {
   }
 
   async refreshToken(signIn: SigninDto) {
-    const isSignIn = await this.validateUser(signIn.username, signIn.password);
+    const isSignIn = await this.validateUser(signIn.email, signIn.password);
 
     if (isSignIn) {
-      const user = await this.userService.findAccountWithEmail(signIn.username);
+      const user = await this.userService.findAccountWithEmail(signIn.email);
       const payload = {
-        username: signIn.username,
+        username: signIn.email,
         sub: {
           name: user.name,
           studentId: user.studentID,
