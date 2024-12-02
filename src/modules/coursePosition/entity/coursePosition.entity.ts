@@ -3,7 +3,6 @@ import {
   Column,
   Entity,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
@@ -15,7 +14,7 @@ export class CoursePositionEntity extends BaseEntity {
   id: number;
 
   @Column({ name: 'days_in_week', nullable: false })
-  days: number;
+  days: string;
 
   @Column({ name: 'start_period' })
   startPeriod: number;
@@ -29,6 +28,6 @@ export class CoursePositionEntity extends BaseEntity {
   )
   scheduler: SchedulerTemplateEntity;
 
-  @OneToMany(() => CoursesEntity, (course) => course.coursePosition)
-  courses: CoursesEntity[];
+  @ManyToOne(() => CoursesEntity, (course) => course.coursePosition)
+  courses: CoursesEntity;
 }

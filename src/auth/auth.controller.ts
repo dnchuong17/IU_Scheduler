@@ -21,10 +21,10 @@ export class AuthController {
     return await this.authService.signup(userDto);
   }
 
-  @UseGuards(LocalAuthGuard)
   @Post('login')
   signIn(@Body() signInDto: SigninDto) {
     this.logger.debug('receive request login');
+    console.log(signInDto);
     return this.authService.signIn(signInDto);
   }
 

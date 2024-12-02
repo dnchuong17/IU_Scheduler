@@ -54,6 +54,12 @@ export class SyncController {
     }
   }
 
+  @Post('syncRealtime')
+  syncRealTime() {
+    return this.syncService.processingSyncRealtime();
+  }
+
+
   @Get('jobCount')
   getJobCount() {
     return this.syncService.getJobCount();

@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
+import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -51,4 +50,17 @@ export class ScheduleTemplateService {
     const schedule = this.datasource.query(query, [id]);
     return schedule;
   }
+
+  async getTemplateBySID(sid: string) {
+    return await this.datasource
+      .getRepository(SchedulerTemplateEntity)
+      .createQueryBuilder('scheduler_template')
+      .leftJoinAndSelect('scheduler_template.user', 'user') // join bảng 'student_users'
+      .where('scheduler_template.is_main_template = true')
+      .andWhere('user.studentID = :sid', { sid })
+      .getOne(); // chỉ lấy 1 kết quả duy nhất (nếu có)
+  }
+
+
+
 }

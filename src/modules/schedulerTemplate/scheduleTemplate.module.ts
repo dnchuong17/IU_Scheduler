@@ -1,10 +1,10 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from '../user/user.module';
 import { ScheduleTemplateService } from './service/scheduleTemplate.service';
 import { SchedulerTemplateController } from './controller/schedulerTemplate.controller';
 import { TracingLoggerModule } from '../../logger/tracinglogger.module';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
-import { UserModule } from '../user/user.module';
 import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
 
 @Module({

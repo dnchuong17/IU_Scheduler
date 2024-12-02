@@ -19,4 +19,17 @@ export class CoursePositionService {
     });
     return await this.coursePositionRepository.save(newPos);
   }
+
+  async existsCoursePosition(coursePosDto: CoursePositionDto) {
+    const coursePos = await this.coursePositionRepository.findOne({
+      where: {
+        days: coursePosDto.days,
+        periods: coursePosDto.periods,
+        startPeriod: coursePosDto.startPeriod,
+        scheduler: coursePosDto.scheduler,
+        courses: coursePosDto.courses,
+      },
+    });
+    return !!coursePos;
+  }
 }

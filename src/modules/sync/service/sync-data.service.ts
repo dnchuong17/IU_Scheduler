@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -21,7 +22,7 @@ import { RedisHelper } from '../../redis/service/redis.service';
 import { SessionIdSyncDto } from '../dto/sync.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SyncEventEntity } from '../entities/sync-event.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { SyncRequestDto } from '../dto/sync-request.dto';
 import { UserService } from '../../user/service/user.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -36,7 +37,11 @@ import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SYNC_POOL_NAME } from './sync-pool.config';
 import { Queue } from 'bullmq';
 import { SyncRealTimeEntity } from '../entities/sync-real-time.entity';
-
+import { SyncRealtimeRequestDto } from '../dto/sync-realtime-request.dto';
+import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
+import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
+import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 
 @Injectable()
 export class SyncDataService {
@@ -51,13 +56,19 @@ export class SyncDataService {
     @InjectRepository(SyncEventEntity)
     private readonly syncRepo: Repository<SyncEventEntity>,
     private readonly userService: UserService,
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    @Inject(forwardRef(() => CoursesService))
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
     @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
-    @InjectRepository(SyncRealTimeEntity) private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
+    @InjectRepository(SyncRealTimeEntity)
+    private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
+    private readonly dataSource: DataSource,
+    private readonly schedulerService: ScheduleTemplateService,
+    private readonly coursePosService: CoursePositionService,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({
@@ -189,18 +200,18 @@ export class SyncDataService {
     const startTime = new Date();
     startTime.setDate(startTime.getDate() - 7);
     const studentIds = await this.userRepo
-      .createQueryBuilder('studentUser')  // Declare the alias for 'studentUser'
+      .createQueryBuilder('studentUser') // Declare the alias for 'studentUser'
       .innerJoin(
-        'studentUser.scheduler',  // Use the 'scheduler' relationship from UserEntity
+        'studentUser.scheduler', // Use the 'scheduler' relationship from UserEntity
         'template',
-        'studentUser.id = template.userId'  // Assuming 'userId' is the foreign key in 'scheduler_template'
+        'studentUser.id = template.userId', // Assuming 'userId' is the foreign key in 'scheduler_template'
       )
       .where('template.is_main_template = :value', { value: true })
       .andWhere(
         '(template.lastsynctime < :date OR template.lastsynctime IS NULL)',
-        { date: startTime }
+        { date: startTime },
       )
-      .select('studentUser.id')  // Ensure you select the required fields
+      .select('studentUser.id') // Ensure you select the required fields
       .getMany();
 
     this.logger.debug(`Total found ${studentIds.length} studentIds`);
@@ -221,7 +232,6 @@ export class SyncDataService {
         jobId: userEntity.studentID,
       });
       this.logger.debug('sync successfully');
-
     }
   }
   async getJobCount() {
@@ -231,6 +241,7 @@ export class SyncDataService {
   async syncDataFromSchedule(id: string) {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
+    console.log(checkKey);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
     const syncReq: SyncRequestDto = <SyncRequestDto>{
       syncEvent: SYNC_EVENT_FROM_SCHEDULE,
@@ -263,7 +274,10 @@ export class SyncDataService {
       },
     );
     const $ = cheerio.load(response.data);
+    const template = await this.schedulerService.getTemplateBySID(id);
+    console.log(template);
     const allCourseDetails = [];
+    const allCoursePositions: CoursePositionDto[] = [];
 
     $('td[onmouseover^="ddrivetip"]').each((index, element) => {
       const onmouseoverAttr = $(element).attr('onmouseover');
@@ -284,7 +298,6 @@ export class SyncDataService {
             : '';
           baseCourseCode = baseCourseCode.replace(/'/g, ''); // Remove single quotes if any
 
-          // Compare extracted course code with map
           this.logger.debug(
             `[SYNC DATA FROM SCHEDULE] Comparing extracted course code: ${baseCourseCode} against map.`,
           );
@@ -296,18 +309,11 @@ export class SyncDataService {
           }
 
           const course = courseCodeMap.get(baseCourseCode);
-          // Extracting the necessary values from params
-          const groupInfo = params[2];
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
           const location = params[5].replace(/^'|'$/g, '');
           const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
           const lecture = params[8].replace(/^'|'$/g, '');
-
-          // Extract group number and labGroup number
-
-          const groupMatch = groupInfo.match(/nhóm (\d+)/i);
-          const labGroupMatch = groupInfo.match(/tổ thực hành (\d+)/i);
 
           const startPeriod = startPeriodStr
             ? parseInt(startPeriodStr, 10)
@@ -315,55 +321,100 @@ export class SyncDataService {
           const numberOfPeriods = numberOfPeriodsStr
             ? parseInt(numberOfPeriodsStr, 10)
             : null;
-
-          const group = groupMatch ? parseInt(groupMatch[1], 10) : null;
-          const labGroup = labGroupMatch
-            ? parseInt(labGroupMatch[1], 10)
-            : null;
           this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
+          const coursePosDto = plainToInstance(CoursePositionDto, {
+            days: dayOfWeek,
+            periods: numberOfPeriods,
+            startPeriod: startPeriod,
+            scheduler: template,
+            courses: course,
+          });
+          console.log(coursePosDto.scheduler);
+          allCoursePositions.push(coursePosDto);
           const courseValueDto = plainToInstance(CourseValueDto, {
-            startPeriod,
             lecture,
             location,
-            dayOfWeek,
-            group,
-            labGroup,
             numberOfPeriods,
             courses: course,
+            scheduler: template,
           });
           allCourseDetails.push(courseValueDto);
         }
       }
     });
-    let newCourseValueCreated = false;
-    this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
-    for (const courseValueDto of allCourseDetails) {
-      const courseExists =
-        await this.courseValueService.existsCourseValue(courseValueDto);
+    console.log(allCoursePositions);
+    for (const coursePosDto of allCoursePositions) {
+      const coursePosExists =
+        await this.coursePosService.existsCoursePosition(coursePosDto);
 
-      if (courseExists) {
-        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+      if (coursePosExists) {
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
         continue;
       }
-      await this.courseValueService.createCourseValue(courseValueDto);
-      newCourseValueCreated = true;
-      this.logger.debug(
-        '[SYNC DATA FROM SCHEDULE] Create course value successfully',
-      );
+      console.log(coursePosDto);
+
+      let newCourseValueCreated = false;
+      for (const coursePosDto of allCoursePositions) {
+        const coursePosExists =
+          await this.coursePosService.existsCoursePosition(coursePosDto);
+        if (coursePosExists) continue;
+      }
+      await this.coursePosService.createCoursePos(coursePosDto);
+
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+      for (const courseValueDto of allCourseDetails) {
+        const courseExists =
+          await this.courseValueService.existsCourseValue(courseValueDto);
+
+        if (courseExists) {
+          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+          continue;
+        }
+        await this.courseValueService.createCourseValue(courseValueDto);
+        newCourseValueCreated = true;
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] Create course value successfully',
+        );
+        console.log(courses);
+      }
+      syncReq.status = newCourseValueCreated;
+      syncReq.finishTime = new Date();
+      syncReq.failReason = newCourseValueCreated
+        ? null
+        : SyncFailReason.EXISTED_COURSE_VALUE;
+      await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
     }
-    syncReq.status = newCourseValueCreated;
-    syncReq.finishTime = new Date();
-    syncReq.failReason = newCourseValueCreated
-      ? null
-      : SyncFailReason.EXISTED_COURSE_VALUE;
-    await this.createSyncEvent(syncReq);
-    this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
     return response.data;
   }
 
-  async syncRealtime(referenceId: string) {
-    
+  async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
+    console.log('Received request:', syncRealtimeReq);
+    const event = await this.syncRealtimeRepo.create({
+      syncEvent: syncRealtimeReq.syncRealtimeEvent,
+      isNew: syncRealtimeReq.isNew,
+      referenceId: syncRealtimeReq.referenceId,
+    });
+    return await this.syncRealtimeRepo.save(event);
+  }
 
+  async processingSyncRealtime() {
+    const query =
+      'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
+    const UID = await this.dataSource.query(query, [SYNC_EVENT_FROM_SCHEDULE]);
+    for (const { reference_id } of UID) {
+      console.log(reference_id);
+      await this.syncDataFromSchedule(reference_id);
+      await this.markSyncAsProcessed(reference_id);
+    }
+  }
+
+  async markSyncAsProcessed(referenceId: string) {
+    await this.syncRealtimeRepo.update(
+      { referenceId, isNew: true },
+      { isNew: false },
+    );
+    this.logger.debug('[SYNC REALTIME] Marked sync event as processed');
   }
 
   async getSyncUser() {

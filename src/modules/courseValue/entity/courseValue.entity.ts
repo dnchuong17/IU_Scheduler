@@ -24,8 +24,11 @@ export class CourseValueEntity extends BaseEntity {
   @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
   courses: CoursesEntity;
 
-  @ManyToOne(() => SchedulerTemplateEntity, (template) => template.courseValues)
-  template: SchedulerTemplateEntity;
+  @ManyToOne(
+    () => SchedulerTemplateEntity,
+    (scheduler) => scheduler.courseValues,
+  )
+  scheduler: SchedulerTemplateEntity;
 
   @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)
   deadlines: DeadlineEntity[];
