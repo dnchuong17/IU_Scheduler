@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DeadlineService {
@@ -15,12 +14,11 @@ export class DeadlineService {
 
   async createDeadline(deadlineDto: DeadlineDto) {
     try {
-      const newDeadline = plainToInstance(DeadlineEntity, deadlineDto);
       await this.deadlineRepository
         .createQueryBuilder()
         .insert()
         .into(DeadlineEntity)
-        .values(newDeadline)
+        .values(deadlineDto)
         .execute();
       return {
         message: 'create deadline successfully',
