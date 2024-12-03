@@ -1,7 +1,13 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto } from '../modules/user/dto/user.dto';
-import { LocalAuthGuard } from './guard/local-auth.guard';
 import { RefreshJwtAuthGuard } from './guard/refresh-jwt-auth.guard';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { SigninDto } from '../modules/user/dto/signin.dto';
@@ -17,15 +23,22 @@ export class AuthController {
 
   @Post('register')
   async signup(@Body() userDto: UserDto) {
-    this.logger.debug('receive request register');
-    return this.authService.signup(userDto);
+    try {
+      this.logger.debug('receive request register');
+      return this.authService.signup(userDto);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   @Post('login')
   signIn(@Body() signInDto: SigninDto) {
-    this.logger.debug('receive request login');
-    console.log(signInDto);
-    return this.authService.signIn(signInDto);
+    try {
+      this.logger.debug('receive request login');
+      return this.authService.signIn(signInDto);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   @UseGuards(RefreshJwtAuthGuard)
