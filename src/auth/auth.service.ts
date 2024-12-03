@@ -47,9 +47,17 @@ export class AuthService {
     const existedUser = await this.userService.findAccountWithEmail(
       userDto.email,
     );
+    console.log(userDto);
 
     if (existedUser) {
       throw new BadRequestException('Email already in use');
+    }
+    const checkEmailResult = await this.emailValidationHelper.validateEmail(
+      userDto.email,
+    );
+    if (!checkEmailResult) {
+      this.logger.debug('Email is not real and fail to validate email');
+      throw new BadRequestException('Email is not real email');
     }
 
     const hashPassword = await bcrypt.hash(userDto.password, 10);
@@ -61,7 +69,9 @@ export class AuthService {
     });
 
     const user = await this.userRepository.save(newUser);
+    this.logger.debug('[SIGN UP] Save user successfully');
 
+    this.logger.debug('[SIGN UP] Create Dto for template');
     const templateDto = plainToInstance(SchedulerTemplateDto, {
       user: user,
       isMainTemplate: true,
@@ -84,7 +94,6 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const user = await this.userService.findAccountWithEmail(email);
-
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
@@ -145,7 +154,13 @@ export class AuthService {
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
-    const decoded = await this.jwtService.decode(token);
-    return decoded.sub?.studentId;
+
+    try {
+      const decoded = await this.jwtService.decode(token);
+      return decoded.sub?.studentId;
+    } catch (error) {
+      this.logger.error('Failed to verify token');
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }
