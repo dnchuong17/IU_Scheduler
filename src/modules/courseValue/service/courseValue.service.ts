@@ -27,6 +27,10 @@ export class CourseValueService {
     return courseValues;
   }
 
+  async getCourseValue(id: number) {
+    return await this.courseValueRepository.findOne({ where: { id } });
+  }
+
   async createCourseValue(courseValueDto: CourseValueDto) {
     const newCourseValue = await this.courseValueRepository.create({
       lecture: courseValueDto.lecture,
@@ -37,7 +41,7 @@ export class CourseValueService {
     return await this.courseValueRepository.save(newCourseValue);
   }
 
-  async existsCourseValue(courseValueDto: CourseValueDto){
+  async existsCourseValue(courseValueDto: CourseValueDto) {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
         courses: courseValueDto.courses,

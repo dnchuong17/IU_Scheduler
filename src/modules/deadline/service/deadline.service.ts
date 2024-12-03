@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
+import { CourseValueService } from '../../courseValue/service/courseValue.service';
 
 @Injectable()
 export class DeadlineService {
@@ -10,23 +11,31 @@ export class DeadlineService {
     @InjectRepository(DeadlineEntity)
     private readonly deadlineRepository: Repository<DeadlineEntity>,
     private readonly dataSource: DataSource,
+    private readonly courseValueService: CourseValueService,
   ) {}
 
   async createDeadline(deadlineDto: DeadlineDto) {
-    try {
+    const existCourseValue = await this.courseValueService.getCourseValue(
+      deadlineDto.courseValueId,
+    );
+    if (existCourseValue) {
       await this.deadlineRepository
         .createQueryBuilder()
         .insert()
         .into(DeadlineEntity)
-        .values(deadlineDto)
+        .values({
+          isActive: deadlineDto.isActive,
+          deadlineType: deadlineDto.deadlineType,
+          priority: deadlineDto.priority,
+          description: deadlineDto.description,
+          deadline: deadlineDto.date,
+          courseValue: existCourseValue,
+        })
         .execute();
-      return {
-        message: 'create deadline successfully',
-      };
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestException(error);
     }
+    return {
+      message: 'create deadline successfully',
+    };
   }
 
   async getAllDeadline() {
