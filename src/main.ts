@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
+import * as cookieParser from 'cookie-parser';
 import { TracingLoggerMiddleware } from './logger/tracing-logger.middleware';
 import { Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -21,6 +21,5 @@ async function bootstrap() {
   app.use(TracingLoggerMiddleware);
 
   logger.log('Server is running in http://localhost:3000.');
-
 }
 bootstrap();
