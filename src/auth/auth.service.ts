@@ -62,9 +62,11 @@ export class AuthService {
     }
     try {
       const hashPassword = await bcrypt.hash(userDto.password, 10);
-      const newUser = plainToInstance(UserDto, {
-        ...userDto,
+      const newUser = plainToInstance(UserEntity, {
+        name: userDto.name,
         password: hashPassword,
+        email: userDto.email,
+        studentId: userDto.studentId,
       });
       const user = await this.userRepository.save(newUser);
       console.log('user', user);
@@ -75,14 +77,14 @@ export class AuthService {
         isSync: true,
       });
       this.logger.debug(
-        `[SIGN UP] Create main template for user: ${userDto.student_id}`,
+        `[SIGN UP] Create main template for user: ${userDto.studentId}`,
       );
       await this.schedulerService.createTemplate(templateDto);
       this.logger.debug('[SIGN UP] Sync realtime event');
       const syncReq = new SyncRealtimeRequestDto();
       syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
       syncReq.isNew = true;
-      syncReq.referenceId = userDto.student_id;
+      syncReq.referenceId = userDto.studentId;
 
       await this.syncDataService.syncRealtime(syncReq);
       return 'sign up successfully';
