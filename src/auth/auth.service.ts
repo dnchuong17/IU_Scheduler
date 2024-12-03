@@ -47,62 +47,47 @@ export class AuthService {
     const existedUser = await this.userService.findAccountWithEmail(
       userDto.email,
     );
-    console.log(userDto);
 
     if (existedUser) {
       throw new BadRequestException('Email already in use');
     }
-    const checkEmailResult = await this.emailValidationHelper.validateEmail(
-      userDto.email,
+
+    const hashPassword = await bcrypt.hash(userDto.password, 10);
+    const newUser = await this.userRepository.create({
+      name: userDto.name,
+      email: userDto.email,
+      password: hashPassword,
+      studentID: userDto.student_id,
+    });
+
+    const user = await this.userRepository.save(newUser);
+
+    const templateDto = plainToInstance(SchedulerTemplateDto, {
+      user: user,
+      isMainTemplate: true,
+      lastSyncTime: new Date(),
+      isSync: true,
+    });
+    this.logger.debug(
+      `[SIGN UP] Create main template for user: ${userDto.student_id}`,
     );
-    if (!checkEmailResult) {
-      this.logger.debug('Email is not real and fail to validate email');
-      throw new BadRequestException('Email is not real email');
-    }
-    try {
-      const hashPassword = await bcrypt.hash(userDto.password, 10);
-      const newUser = await this.userRepository.create({
-        name: userDto.name,
-        email: userDto.email,
-        password: hashPassword,
-        studentID: userDto.student_id,
-      });
+    await this.schedulerService.createTemplate(templateDto);
+    this.logger.debug('[SIGN UP] Sync realtime event');
+    const syncReq = new SyncRealtimeRequestDto();
+    syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
+    syncReq.isNew = true;
+    syncReq.referenceId = userDto.student_id;
 
-      console.log(newUser);
-      const user = await this.userRepository.save(newUser);
-      console.log('user', user);
-      const templateDto = plainToInstance(SchedulerTemplateDto, {
-        user: user,
-        isMainTemplate: true,
-        lastSyncTime: new Date(),
-        isSync: true,
-      });
-      this.logger.debug(
-        `[SIGN UP] Create main template for user: ${userDto.student_id}`,
-      );
-      await this.schedulerService.createTemplate(templateDto);
-      this.logger.debug('[SIGN UP] Sync realtime event');
-      const syncReq = new SyncRealtimeRequestDto();
-      syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
-      syncReq.isNew = true;
-      syncReq.referenceId = userDto.student_id;
-
-      await this.syncDataService.syncRealtime(syncReq);
-      return 'sign up successfully';
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    await this.syncDataService.syncRealtime(syncReq);
+    return 'sign up successfully';
   }
 
   async validateUser(email: string, password: string) {
     const user = await this.userService.findAccountWithEmail(email);
-    try {
-      if (user && (await bcrypt.compare(password, user.password))) {
-        const { password, ...result } = user;
-        return result;
-      }
-    } catch (error) {
-      throw new UnauthorizedException(error);
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const { password, ...result } = user;
+      return result;
     }
     return null;
   }
@@ -160,13 +145,7 @@ export class AuthService {
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
-
-    try {
-      const decoded = await this.jwtService.decode(token);
-      return decoded.sub?.studentId;
-    } catch (error) {
-      this.logger.error('Failed to verify token');
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    const decoded = await this.jwtService.decode(token);
+    return decoded.sub?.studentId;
   }
 }
