@@ -43,10 +43,13 @@ export class AuthService {
   }
 
   async signup(userDto: UserDto) {
+    console.log();
     this.logger.debug('sign up');
     const existedUser = await this.userService.findAccountWithEmail(
       userDto.email,
     );
+    console.log(userDto);
+
     if (existedUser) {
       throw new BadRequestException('Email already in use');
     }
@@ -59,11 +62,12 @@ export class AuthService {
     }
     try {
       const hashPassword = await bcrypt.hash(userDto.password, 10);
-      const newUser = plainToInstance(UserEntity, {
+      const newUser = plainToInstance(UserDto, {
         ...userDto,
         password: hashPassword,
       });
       const user = await this.userRepository.save(newUser);
+      console.log('user', user);
       const templateDto = plainToInstance(SchedulerTemplateDto, {
         user: user,
         isMainTemplate: true,
