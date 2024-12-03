@@ -71,14 +71,14 @@ export class AuthService {
         isSync: true,
       });
       this.logger.debug(
-        `[SIGN UP] Create main template for user: ${userDto.studentID}`,
+        `[SIGN UP] Create main template for user: ${userDto.student_id}`,
       );
       await this.schedulerService.createTemplate(templateDto);
       this.logger.debug('[SIGN UP] Sync realtime event');
       const syncReq = new SyncRealtimeRequestDto();
       syncReq.syncRealtimeEvent = SYNC_EVENT_FROM_SCHEDULE;
       syncReq.isNew = true;
-      syncReq.referenceId = userDto.studentID;
+      syncReq.referenceId = userDto.student_id;
 
       await this.syncDataService.syncRealtime(syncReq);
       return 'sign up successfully';
