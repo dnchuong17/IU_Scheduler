@@ -34,7 +34,8 @@ export class CoursesService {
       isNew,
     });
     this.logger.debug('[CREATE COURSE] Save course to database');
-    return this.coursesRepository.save(course);
+    const savedCourse = await this.coursesRepository.save(course);
+    return savedCourse;
   }
 
   async getCourses() {
