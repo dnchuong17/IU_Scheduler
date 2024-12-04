@@ -81,6 +81,15 @@ export class ScheduleTemplateService {
               credits: credits,
               isNew: true,
             });
+            const newPosition = await this.coursePositonService.createCoursePos(
+              {
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: existedTemplate,
+                courses: courses,
+              },
+            );
           }
         }
       }
