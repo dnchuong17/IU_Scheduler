@@ -65,7 +65,7 @@ export class ScheduleTemplateService {
             isActive,
             isDeleted,
           } = course;
-          // If we can not find any course in database with the reponse courseID => create new course => new coursePosition
+          // If we can not find any course in database with the reponse courseID => create new course => new coursePosition => new course Value
           const existedCourse =
             await this.coursesService.findCourseByCourseCode(courseID);
 
@@ -76,16 +76,21 @@ export class ScheduleTemplateService {
               credits: credits,
               isNew: true,
             });
-
-            const newPosition = await this.coursePositonService.createCoursePos(
-              {
+            const newCoursePosition =
+              await this.coursePositonService.createCoursePos({
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
                 scheduler: existedTemplate,
                 courses: courses,
-              },
-            );
+              });
+            const newCourseValue =
+              await this.courseValueService.createCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: courses,
+                template: existedTemplate,
+              });
           }
         }
       }
