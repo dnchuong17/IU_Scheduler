@@ -17,7 +17,7 @@ export class CoursePositionService {
       startPeriod: coursePosDto.startPeriod,
       scheduler: coursePosDto.scheduler,
     });
-    return await this.coursePositionRepository.save(newPos);
+    return await this.coursePositionRepository.insert(newPos);
   }
 
   async deleteCoursePosByCourseId(courseId: number): Promise<void> {

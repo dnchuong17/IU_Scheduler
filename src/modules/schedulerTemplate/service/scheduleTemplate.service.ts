@@ -108,7 +108,7 @@ export class ScheduleTemplateService {
       user: templateDto.user,
     });
     this.logger.debug('[CREATE TEMPLATE] save template successfully');
-    return await this.schedulerTemplateRepo.insert(newTemplate);
+    return await this.schedulerTemplateRepo.save(newTemplate);
   }
 
   async getTemplate(id: number) {
