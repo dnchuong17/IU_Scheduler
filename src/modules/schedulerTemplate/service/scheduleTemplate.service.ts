@@ -78,18 +78,21 @@ export class ScheduleTemplateService {
               credits: credits,
               isNew: true,
             });
-            const newCoursePosition = await this.coursePositonService.createCoursePos(
-              {
+            const newCoursePosition =
+              await this.coursePositonService.createCoursePos({
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
                 scheduler: existedTemplate,
                 courses: courses,
-              },
-            );
-            const newCourseValue = await this.courseValueService.createCourseValue({
-
-            });
+              });
+            const newCourseValue =
+              await this.courseValueService.createCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: courses,
+                template: existedTemplate,
+              });
           }
         }
       }

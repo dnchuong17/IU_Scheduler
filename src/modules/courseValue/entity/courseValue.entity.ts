@@ -1,11 +1,11 @@
 import {
   BaseEntity,
   Column,
-  Entity,
+  Entity, JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+  PrimaryGeneratedColumn
+} from "typeorm";
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { DeadlineEntity } from '../../deadline/entity/deadline.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
@@ -25,6 +25,7 @@ export class CourseValueEntity extends BaseEntity {
   courses: CoursesEntity;
 
   @ManyToOne(() => SchedulerTemplateEntity, (template) => template.courseValues)
+  @JoinColumn({ name: 'schedulerId' })
   template: SchedulerTemplateEntity;
 
   @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)

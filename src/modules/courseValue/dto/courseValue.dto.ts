@@ -3,10 +3,6 @@ import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 export class CourseValueDto {
-  @IsNumber()
-  @IsNotEmpty()
-  startPeriod: number;
-
   @IsString()
   @IsNotEmpty()
   lecture: string;
