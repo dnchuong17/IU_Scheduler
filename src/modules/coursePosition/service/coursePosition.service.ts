@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CoursePositionEntity } from '../entity/coursePosition.entity';
 import { Repository } from 'typeorm';
@@ -17,7 +17,17 @@ export class CoursePositionService {
       startPeriod: coursePosDto.startPeriod,
       scheduler: coursePosDto.scheduler,
     });
-    return await this.coursePositionRepository.save(newPos);
+    return await this.coursePositionRepository.insert(newPos);
+  }
+
+  async deleteCoursePosByCourseId(courseId: number): Promise<void> {
+    const deletedCourse = await this.coursePositionRepository.findOne({
+      where: { id: courseId },
+    });
+    if (!deletedCourse) {
+      throw new NotFoundException('Course is not found');
+    }
+    await this.coursePositionRepository.delete({ id: courseId });
   }
 
   async existsCoursePosition(coursePosDto: CoursePositionDto) {

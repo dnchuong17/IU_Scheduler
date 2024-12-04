@@ -1,10 +1,11 @@
 import {
   BaseEntity,
   Column,
-  Entity,
+  Entity, JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+  OneToMany, OneToOne,
+  PrimaryGeneratedColumn
+} from "typeorm";
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
@@ -28,6 +29,7 @@ export class CoursePositionEntity extends BaseEntity {
   )
   scheduler: SchedulerTemplateEntity;
 
-  @ManyToOne(() => CoursesEntity, (course) => course.coursePosition)
-  courses: CoursesEntity;
+  @OneToOne(() => CoursesEntity, (course) => course.coursePosition)
+  @JoinColumn({ name: 'coursesId' })
+  courses: CoursesEntity[];
 }

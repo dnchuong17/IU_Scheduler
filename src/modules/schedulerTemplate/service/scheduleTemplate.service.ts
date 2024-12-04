@@ -4,6 +4,14 @@ import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { plainToInstance } from 'class-transformer';
+import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
+import { UserService } from '../../user/service/user.service';
+import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
+import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
+import { CourseValueService } from '../../courseValue/service/courseValue.service';
+import { CoursesService } from '../../courses/service/courses.service';
+import { ScheduleTemplateModule } from '../scheduleTemplate.module';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 @Injectable()
 export class ScheduleTemplateService {
@@ -14,27 +22,93 @@ export class ScheduleTemplateService {
     private readonly userRepo: Repository<UserEntity>,
     private readonly datasource: DataSource,
     private readonly logger: TracingLoggerService,
+    private readonly userService: UserService,
+    private readonly courseValueService: CourseValueService,
+    private readonly coursePositonService: CoursePositionService,
+    private readonly coursesService: CoursesService,
   ) {}
 
-  async findTemplateWithId(id: number): Promise<boolean> {
+  async findTemplateWithId(id: number) {
     const query = `
       SELECT *
       FROM scheduler_template
       WHERE scheduler_template.scheduler_id = $1
     `;
     const template = await this.datasource.query(query, [id]);
-    return template.length > 0;
+    return template.length > 0 ? template[0] : null;
+  }
+
+  async createSchedule(schedulerTemplateDto: SchedulerTemplateDto) {
+    // Find student by student ID
+    const existedStudent = await this.userService.findUserWithUID(
+      schedulerTemplateDto.studentId,
+    );
+
+    // The reponse template ID is null
+    if (schedulerTemplateDto.templateId === null) {
+      const templateDto = plainToInstance(SchedulerTemplateDto, {
+        user: existedStudent,
+      });
+      await this.createTemplate(templateDto);
+    }
+
+    // The reponse template ID is not null
+    else {
+      const existedTemplate = await this.findTemplateWithId(
+        schedulerTemplateDto.templateId,
+      );
+      if (existedTemplate !== null) {
+        for (const course of schedulerTemplateDto.listOfCourses) {
+          const {
+            courseID,
+            courseName,
+            date,
+            startPeriod,
+            periodsCount,
+            credits,
+            location,
+            lecturer,
+            isActive,
+            isDeleted,
+          } = course;
+          // If we can not find any course in database with the reponse courseID => create new course => new coursePosition
+          const existedCourse =
+            await this.coursesService.findCourseByCourseCode(courseID);
+
+          if (!existedCourse) {
+            const courses = await this.coursesService.createCourse({
+              courseCode: courseID,
+              name: courseName,
+              credits: credits,
+              isNew: true,
+            });
+            const newPosition = await this.coursePositonService.createCoursePos(
+              {
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: existedTemplate,
+                courses: courses,
+              },
+            );
+          }
+        }
+      }
+    }
+
+    // New funcion delete if Isdeleted === true
+    // New function delete all: isDeleted of all course value === true => recall above function
   }
 
   async createTemplate(templateDto: SchedulerTemplateDto) {
-    this.logger.debug('create template');
-    const newTemplate = await this.schedulerTemplateRepo.create({
+    this.logger.debug('[CREATE TEMPLATE] create template');
+    const newTemplate = this.schedulerTemplateRepo.create({
       isSync: templateDto.isSynced,
       isMain: templateDto.isMainTemplate,
       lastSyncTime: templateDto.lastSyncTime,
       user: templateDto.user,
     });
-    this.logger.debug('save template');
+    this.logger.debug('[CREATE TEMPLATE] save template successfully');
     return await this.schedulerTemplateRepo.save(newTemplate);
   }
 

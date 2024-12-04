@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CoursesDto } from '../dto/courses.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CoursesEntity } from '../entity/courses.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 
@@ -11,9 +15,11 @@ export class CoursesService {
     @InjectRepository(CoursesEntity)
     private readonly coursesRepository: Repository<CoursesEntity>,
     private readonly logger: TracingLoggerService,
+    private readonly dataSource: DataSource,
   ) {
     this.logger.setContext(CoursesService.name);
   }
+
   async getAllCourses() {
     const response = await this.coursesRepository.find();
     const courseCodes = response.map((courses) => courses.courseCode);
@@ -37,5 +43,11 @@ export class CoursesService {
 
   async getCourses() {
     return await this.coursesRepository.find();
+  }
+
+  async findCourseByCourseCode(coursesCode: string) {
+    const query = `SELECT * FROM courses WHERE course_code = $1`;
+    const course = await this.dataSource.query(query, [coursesCode]);
+    return course.length > 0 ? course[0] : null;
   }
 }

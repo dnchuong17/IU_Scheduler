@@ -10,6 +10,6 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
   imports: [TypeOrmModule.forFeature([CourseValueEntity, CoursesEntity])],
   controllers: [CourseValueController],
   providers: [CourseValueService, TracingLoggerService],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, CourseValueService],
 })
 export class CourseValueModule {}
