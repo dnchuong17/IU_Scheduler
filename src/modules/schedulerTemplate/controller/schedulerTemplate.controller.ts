@@ -9,6 +9,7 @@ import {
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { CreateSchedulerDto } from '../dto/createScheduler.dto';
+import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {
@@ -25,12 +26,17 @@ export class SchedulerTemplateController {
   }
 
   @Post('create')
-  createTemplate(@Body() createSchedulerDto: CreateSchedulerDto) {
+  createTemplate(@Body() templateDto: SchedulerTemplateDto) {
     try {
       this.logger.debug('[CREATE TEMPLATE]: Receive request creating template');
-      return this.templateService.createTemplate(createSchedulerDto);
+      return this.templateService.createTemplate(templateDto);
     } catch (error) {
       throw new BadRequestException('Cant sync data from schedule');
     }
+  }
+
+  @Post('createScheduler')
+  createScheduler(@Body() createSchedulerDto: CreateSchedulerDto) {
+    return this.templateService.createScheduler(createSchedulerDto);
   }
 }

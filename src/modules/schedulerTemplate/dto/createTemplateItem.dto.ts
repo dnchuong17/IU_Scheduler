@@ -1,5 +1,4 @@
 export class CreateTemplateItemDto {
-  id: number;
   courseID: string;
   courseName: string;
   date: string;

@@ -35,7 +35,6 @@ import { CourseValueDto } from '../../courseValue/dto/courseValue.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SYNC_POOL_NAME } from './sync-pool.config';
 import { Queue } from 'bullmq';
-import { SyncRealTimeEntity } from '../entities/sync-real-time.entity';
 
 
 @Injectable()
@@ -57,7 +56,6 @@ export class SyncDataService {
     private readonly courseService: CoursesService,
     private readonly courseValueService: CourseValueService,
     @Inject(SYNC_POOL_NAME) private readonly syncQueue: Queue,
-    @InjectRepository(SyncRealTimeEntity) private readonly syncRealtimeRepo: Repository<SyncRealTimeEntity>,
   ) {
     this.logger.setContext(SyncDataService.name);
     this.instance = axios.create({

@@ -12,6 +12,7 @@ import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
+import { ScheduleTemplateModule } from '../scheduleTemplate.module';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -22,92 +23,95 @@ export class ScheduleTemplateService {
     private readonly datasource: DataSource,
     private readonly logger: TracingLoggerService,
     private readonly userService: UserService,
-    private readonly coursePositonService: CoursePositionService,
     private readonly courseValueService: CourseValueService,
+    private readonly coursePositonService: CoursePositionService,
     private readonly coursesService: CoursesService,
   ) {}
 
   async findTemplateWithId(id: number): Promise<boolean> {
-    try {
-      const query = `
+    const query = `
       SELECT *
       FROM scheduler_template
       WHERE scheduler_template.scheduler_id = $1
     `;
-      const template = await this.datasource.query(query, [id]);
-      return template.length > 0;
-    } catch (error) {
-      this.logger.error(
-        `Error fetching template with ID ${id}: ${error.message}`,
-      );
-      throw new BadRequestException('Could not fetch template');
-    }
+    const template = await this.datasource.query(query, [id]);
+    return template.length > 0;
   }
 
-  async findTemplateForCreateScheduler(studentId: string, templateId: number) {
-    // Find student by Student ID, if null => throw error
-    const user = await this.userService.findUserWithUID(studentId);
-    if (!user) {
-      this.logger.error(`[ERROR] User with ID ${studentId} not found!`);
-      throw new BadRequestException('user not found');
-    }
-    // If templateID is null => create new Template
-    if (!templateId) {
-      const templateDto = plainToInstance(SchedulerTemplateDto, {
-        user: user,
-      });
-      return await this.createTemplate(templateDto);
-    }
-  }
-
-  async createScheduler(createSchedulerDto: CreateSchedulerDto) {
+  async createScheduler(templateDto: SchedulerTemplateDto) {
     // Check null
-    const { studentId, templateId, listOfCourses } = createSchedulerDto;
-    // If studentID is null => error
-    if (!studentId) {
-      this.logger.error(`[ERROR] Student with ID ${studentId} not found!`);
-      throw new BadRequestException('studentId is required');
+    if (templateDto.templateId === null) {
+      // create new template
     }
-    // If we can not find template by template id => throw error
-    const newTemplate = await this.findTemplateForCreateScheduler(
-      studentId,
-      templateId,
+    const existedTemplate = await this.findTemplateWithId(
+      templateDto.templateId,
     );
-    if (!newTemplate) {
-      this.logger.error(`[ERROR] template with ID ${templateId} not found!`);
-      throw new BadRequestException('template not found');
+    if (existedTemplate) {
+      // update
     }
-    // Create new template
-    for (const course of listOfCourses) {
-      const {
-        courseID,
-        courseName,
-        date,
-        startPeriod,
-        periodsCount,
-        credits,
-        location,
-        lecturer,
-        isActive,
-        isDeleted,
-      } = course;
-      // If courseID = null (no equivalent course in database) => create new course, new coursePosition
-      if (!courseID) {
-        const courses = await this.coursesService.createCourse({
-          credits: credits,
-          courseCode: courseID,
-          name: courseName,
-        });
-        await this.coursePositonService.createCoursePos({
-          days: date,
-          periods: periodsCount,
-          startPeriod: startPeriod,
-          scheduler: newTemplate,
-          courses: courses,
-        });
-      }
-      // Update template
-    }
+
+    // New funcion delete if Isdeleted === true
+    // New function delete all: isDeleted of all course value === true => recall above function
+
+    // // Create new template
+    // for (const course of createSchedulerDto.listOfCourses) {
+    //   const {
+    //     courseID,
+    //     courseName,
+    //     date,
+    //     startPeriod,
+    //     periodsCount,
+    //     credits,
+    //     location,
+    //     lecturer,
+    //     isActive,
+    //     isDeleted,
+    //   } = course;
+    //   // If courseID = null (no equivalent course in database) => create new course, new coursePosition
+    //   if (!courseID) {
+    //     const courses = await this.coursesService.createCourse({
+    //       credits: credits,
+    //       courseCode: courseID,
+    //       name: courseName,
+    //     });
+    //     await this.coursePositonService.createCoursePos({
+    //       days: date,
+    //       periods: periodsCount,
+    //       startPeriod: startPeriod,
+    //       scheduler: foundTemplate,
+    //       courses: courses,
+    //     });
+    //     // If isDeleted = true => delete course by course code from coursePosition
+    //     if (isDeleted == true) {
+    //       const deletedCourse =
+    //         await this.coursesService.findCourseByCourseCode(courseID);
+    //       if (!deletedCourse) {
+    //         this.logger.error(
+    //           `[ERROR] Course with courseCode ${courseID} not found!`,
+    //         );
+    //         throw new BadRequestException('Course not found');
+    //       }
+    //       await this.coursePositonService.deleteCoursePosByCourseId(
+    //         deletedCourse.id,
+    //       );
+    //     }
+    //     // If CourseID != null and found successfully => delete coursePosition and add new coursePosition for that course
+    //     const foundCourse =
+    //       await this.coursesService.findCourseByCourseCode(courseID);
+    //     if (foundCourse) {
+    //       await this.coursePositonService.deleteCoursePosByCourseId(
+    //         foundCourse.id,
+    //       );
+    //       await this.coursePositonService.createCoursePos({
+    //         days: date,
+    //         periods: periodsCount,
+    //         startPeriod: startPeriod,
+    //         scheduler: foundTemplate,
+    //         courses: courses,
+    //       });
+    //     }
+    //   }
+    // }
   }
 
   async createTemplate(templateDto: SchedulerTemplateDto) {

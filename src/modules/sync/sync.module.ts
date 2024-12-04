@@ -20,7 +20,6 @@ import { SYNC_PROCESSOR, syncPoolConfig } from './service/sync-pool.config';
 import { RedisModule } from '../redis/redis.module';
 import { SYNC_DATA_SERVICE } from './utils/sync.constant';
 import { ModuleRef } from '@nestjs/core';
-import { SyncRealTimeEntity } from './entities/sync-real-time.entity';
 
 @Module({
   imports: [
@@ -33,7 +32,6 @@ import { SyncRealTimeEntity } from './entities/sync-real-time.entity';
       CoursesEntity,
       CourseValueEntity,
       CoursePositionEntity,
-      SyncRealTimeEntity,
     ]),
   ],
   controllers: [SyncController],

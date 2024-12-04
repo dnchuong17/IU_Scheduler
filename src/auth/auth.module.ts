@@ -19,12 +19,19 @@ import { RedisHelper } from '../modules/redis/service/redis.service';
 import * as process from 'process';
 import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/scheduleTemplate.service';
 import { SchedulerTemplateEntity } from '../modules/schedulerTemplate/entity/schedulerTemplate.entity';
+import {CoursePositionModule} from "../modules/coursePosition/coursePosition.module";
+import {CourseValueModule} from "../modules/courseValue/courseValue.module";
+import {CoursesModule} from "../modules/courses/course.module";
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
     TracingLoggerModule,
+    ScheduleTemplateModule,
+    CoursePositionModule,
+    CourseValueModule,
+    CoursesModule,
     RedisModule,
     JwtModule.register({
       secret: `${process.env.SECRETEKEY}`,
