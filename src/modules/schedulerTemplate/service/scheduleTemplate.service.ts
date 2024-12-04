@@ -1,5 +1,3 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { getDataSourceToken, InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
@@ -7,9 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 import { UserService } from '../../user/service/user.service';
-import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
@@ -133,7 +129,4 @@ export class ScheduleTemplateService {
       .andWhere('user.studentID = :sid', { sid })
       .getOne(); // chỉ lấy 1 kết quả duy nhất (nếu có)
   }
-
-
-
 }
