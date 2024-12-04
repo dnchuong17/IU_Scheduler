@@ -18,23 +18,30 @@ export class DeadlineService {
     const existCourseValue = await this.courseValueService.getCourseValue(
       deadlineDto.courseValueId,
     );
-    if (existCourseValue) {
-      await this.deadlineRepository
-        .createQueryBuilder()
-        .insert()
-        .into(DeadlineEntity)
-        .values({
-          isActive: deadlineDto.isActive,
-          deadlineType: deadlineDto.deadlineType,
-          priority: deadlineDto.priority,
-          description: deadlineDto.description,
-          deadline: deadlineDto.date,
-          courseValue: existCourseValue,
-        })
-        .execute();
+
+    if (!existCourseValue) {
+      return {
+        message: 'Course value not found',
+        statusCode: 404,
+      };
     }
+
+    await this.deadlineRepository
+      .createQueryBuilder()
+      .insert()
+      .into(DeadlineEntity)
+      .values({
+        isActive: deadlineDto.isActive,
+        deadlineType: deadlineDto.deadlineType,
+        priority: deadlineDto.priority,
+        description: deadlineDto.description,
+        deadline: new Date(deadlineDto.date),
+        courseValue: existCourseValue,
+      })
+      .execute();
+
     return {
-      message: 'create deadline successfully',
+      message: 'Deadline created successfully',
     };
   }
 
