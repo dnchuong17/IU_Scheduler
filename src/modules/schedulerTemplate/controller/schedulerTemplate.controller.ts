@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
+import { SchedulerTemplateDto } from "../dto/scheduler-Template.dto";
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {

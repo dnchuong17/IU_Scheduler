@@ -5,13 +5,10 @@ import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { plainToInstance } from 'class-transformer';
-import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 import { UserService } from '../../user/service/user.service';
-import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
-import { ScheduleTemplateModule } from '../scheduleTemplate.module';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 @Injectable()
 export class ScheduleTemplateService {
