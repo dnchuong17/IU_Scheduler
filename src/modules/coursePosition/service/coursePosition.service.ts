@@ -16,6 +16,7 @@ export class CoursePositionService {
       periods: coursePosDto.periods,
       startPeriod: coursePosDto.startPeriod,
       scheduler: coursePosDto.scheduler,
+      courses: coursePosDto.courses,
     });
     return await this.coursePositionRepository.insert(newPos);
   }

@@ -31,5 +31,5 @@ export class CoursePositionEntity extends BaseEntity {
 
   @OneToOne(() => CoursesEntity, (course) => course.coursePosition)
   @JoinColumn({ name: 'coursesId' })
-  courses: CoursesEntity[];
+  courses: CoursesEntity;
 }

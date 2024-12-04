@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { getDataSourceToken, InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
@@ -28,13 +28,10 @@ export class ScheduleTemplateService {
   ) {}
 
   async findTemplateWithId(id: number) {
-    const query = `
-      SELECT *
-      FROM scheduler_template
-      WHERE scheduler_template.scheduler_id = $1
-    `;
-    const template = await this.datasource.query(query, [id]);
-    return template.length > 0 ? template[0] : null;
+    const template = await this.schedulerTemplateRepo.findOne({
+      where: { id: id },
+    });
+    return template;
   }
 
   async createSchedule(schedulerTemplateDto: SchedulerTemplateDto) {
@@ -81,6 +78,7 @@ export class ScheduleTemplateService {
               credits: credits,
               isNew: true,
             });
+
             const newPosition = await this.coursePositonService.createCoursePos(
               {
                 days: date,
@@ -114,13 +112,13 @@ export class ScheduleTemplateService {
   async getTemplate(id: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] Get template`s information');
     const query =
-      'SELECT scheduler_template.*, course_position.* , courses.*, course_value.* FROM scheduler_template' +
+      'SELECT scheduler_template.*, course_position.*, courses.*, course_value.* FROM scheduler_template' +
       ' LEFT JOIN course_position ON scheduler_template.scheduler_id = course_position."schedulerId"' +
       ' LEFT JOIN courses ON courses."coursePositionId" = course_position.course_position_id' +
       ' LEFT JOIN course_value ON course_value."coursesId" = courses.course_id WHERE scheduler_template.scheduler_id =' +
       ' $1';
 
-    const schedule = this.datasource.query(query, [id]);
+    const schedule = await this.datasource.query(query, [id]);
     return schedule;
   }
 }
