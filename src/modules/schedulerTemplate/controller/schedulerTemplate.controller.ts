@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { CreateSchedulerDto } from '../dto/createScheduler.dto';
 import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 
 @Controller('scheduleTemplate')
@@ -35,8 +34,8 @@ export class SchedulerTemplateController {
     }
   }
 
-  @Post('createScheduler')
-  createScheduler(@Body() createSchedulerDto: CreateSchedulerDto) {
-    return this.templateService.createScheduler(createSchedulerDto);
+  @Post('createSchedule')
+  createScheduler(@Body() schedulerTemplateDto: SchedulerTemplateDto) {
+    return this.templateService.createSchedule(schedulerTemplateDto);
   }
 }

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CoursesDto } from '../dto/courses.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CoursesEntity } from '../entity/courses.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 
@@ -15,6 +15,7 @@ export class CoursesService {
     @InjectRepository(CoursesEntity)
     private readonly coursesRepository: Repository<CoursesEntity>,
     private readonly logger: TracingLoggerService,
+    private readonly dataSource: DataSource,
   ) {
     this.logger.setContext(CoursesService.name);
   }
@@ -45,20 +46,8 @@ export class CoursesService {
   }
 
   async findCourseByCourseCode(coursesCode: string) {
-    try {
-      const course = await this.coursesRepository.findOne({
-        where: { courseCode: coursesCode },
-      });
-      if (!course) {
-        this.logger.error(
-          `[GET COURSE BY ID] Course with ID ${coursesCode} not found`,
-        );
-        throw new NotFoundException(`Course with ID ${coursesCode} not found`);
-      }
-      return course;
-    } catch (error) {
-      this.logger.error('[GET COURSE BY ID] Error fetching course by ID');
-      throw new BadRequestException('Failed to fetch course by ID');
-    }
+    const query = `SELECT * FROM courses WHERE course_code = $1`;
+    const course = await this.dataSource.query(query, [coursesCode]);
+    return course.length > 0 ? course[0] : null;
   }
 }
