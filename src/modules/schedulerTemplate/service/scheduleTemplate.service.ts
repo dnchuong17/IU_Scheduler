@@ -98,6 +98,23 @@ export class ScheduleTemplateService {
           }
           // If we can find one course in database with the reponse courseID => update course position
           else {
+            const allCoursesDeleted = schedulerTemplateDto.listOfCourses.every(
+              (course) => course.isDeleted,
+            );
+            // If all isDeleted variables inside the listOfCourse array is true => delete all course
+            if (allCoursesDeleted) {
+              await this.deleteAllCourse(
+                schedulerTemplateDto,
+                existedCourse,
+                existedTemplate,
+              );
+            } else {
+              await this.deleteCourse(
+                schedulerTemplateDto,
+                existedCourse,
+                existedTemplate,
+              );
+            }
             // update course
             await this.coursesService.updateCourse({
               courseCode: courseID,
@@ -121,23 +138,6 @@ export class ScheduleTemplateService {
               scheduler: existedTemplate,
             });
           }
-        }
-        const allCoursesDeleted = schedulerTemplateDto.listOfCourses.every(
-          (course) => course.isDeleted,
-        );
-        // If all isDeleted variables inside the listOfCourse array is true => delete all course
-        if (allCoursesDeleted) {
-          await this.deleteAllCourse(
-            schedulerTemplateDto,
-            existedCourse,
-            existedTemplate,
-          );
-        } else {
-          await this.deleteCourse(
-            schedulerTemplateDto,
-            existedCourse,
-            existedTemplate,
-          );
         }
       }
     }
