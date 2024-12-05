@@ -89,7 +89,7 @@ export class ScheduleTemplateService {
                 lecture: lecturer,
                 location: location,
                 courses: courses,
-                template: existedTemplate,
+                scheduler: existedTemplate,
               });
           }
         }
