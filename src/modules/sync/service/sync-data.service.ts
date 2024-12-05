@@ -276,6 +276,9 @@ export class SyncDataService {
     const $ = cheerio.load(response.data);
     const template = await this.schedulerService.getTemplateBySID(id);
     console.log(template);
+    if (!template) {
+      this.logger.error(`[SYNC DATA FROM SCHEDULE] Template not found for ID: ${id}`);
+    }
     const allCourseDetails = [];
     const allCoursePositions: CoursePositionDto[] = [];
 
@@ -309,6 +312,9 @@ export class SyncDataService {
           }
 
           const course = courseCodeMap.get(baseCourseCode);
+          if (!course) {
+            this.logger.error(`[SYNC DATA FROM SCHEDULE] Course not found for code: ${baseCourseCode}`);
+          }
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
           const location = params[5].replace(/^'|'$/g, '');
@@ -389,7 +395,6 @@ export class SyncDataService {
   }
 
   async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
-    console.log('Received request:', syncRealtimeReq);
     const event = await this.syncRealtimeRepo.create({
       syncEvent: syncRealtimeReq.syncRealtimeEvent,
       isNew: syncRealtimeReq.isNew,

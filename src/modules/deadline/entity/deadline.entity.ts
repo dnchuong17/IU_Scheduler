@@ -20,9 +20,9 @@ export class DeadlineEntity extends BaseEntity {
 
   @Column({
     name: 'deadline_type',
-    type: 'enum', // Specify that this is an enum type
-    enum: DeadlineType, // Reference the DeadlineType enum
-    default: DeadlineType.OTHER, // Default value
+    type: 'enum',
+    enum: DeadlineType,
+    default: DeadlineType.OTHER,
     nullable: false,
   })
   deadlineType: DeadlineType;

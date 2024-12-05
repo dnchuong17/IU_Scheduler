@@ -8,7 +8,7 @@ import { CoursesModule } from '../courses/course.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([CoursePositionEntity]),
-    ScheduleTemplateModule,
+    forwardRef(() => ScheduleTemplateModule),
     forwardRef(() => CoursesModule),
   ],
   controllers: [],

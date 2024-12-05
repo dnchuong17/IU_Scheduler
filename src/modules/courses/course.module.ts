@@ -14,6 +14,6 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
   ],
   controllers: [],
   providers: [CoursesService, TracingLoggerService],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, CoursesService],
 })
 export class CoursesModule {}

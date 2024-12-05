@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
-import { plainToInstance } from 'class-transformer';
+import { CourseValueService } from '../../courseValue/service/courseValue.service';
 
 @Injectable()
 export class DeadlineService {
@@ -11,24 +11,38 @@ export class DeadlineService {
     @InjectRepository(DeadlineEntity)
     private readonly deadlineRepository: Repository<DeadlineEntity>,
     private readonly dataSource: DataSource,
+    private readonly courseValueService: CourseValueService,
   ) {}
 
   async createDeadline(deadlineDto: DeadlineDto) {
-    try {
-      const newDeadline = plainToInstance(DeadlineEntity, deadlineDto);
-      await this.deadlineRepository
-        .createQueryBuilder()
-        .insert()
-        .into(DeadlineEntity)
-        .values(newDeadline)
-        .execute();
+    const existCourseValue = await this.courseValueService.getCourseValue(
+      deadlineDto.courseValueId,
+    );
+
+    if (!existCourseValue) {
       return {
-        message: 'create deadline successfully',
+        message: 'Course value not found',
+        statusCode: 404,
       };
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestException(error);
     }
+
+    await this.deadlineRepository
+      .createQueryBuilder()
+      .insert()
+      .into(DeadlineEntity)
+      .values({
+        isActive: deadlineDto.isActive,
+        deadlineType: deadlineDto.deadlineType,
+        priority: deadlineDto.priority,
+        description: deadlineDto.description,
+        deadline: new Date(deadlineDto.date),
+        courseValue: existCourseValue,
+      })
+      .execute();
+
+    return {
+      message: 'Deadline created successfully',
+    };
   }
 
   async getAllDeadline() {

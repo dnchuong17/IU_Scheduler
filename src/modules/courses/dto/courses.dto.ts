@@ -8,9 +8,9 @@ export class CoursesDto {
   @IsNumber()
   @IsNotEmpty()
   @Min(0)
-  credits: number;
+  credits?: number;
 
   courseCode: string;
 
-  isNew: boolean;
+  isNew?: boolean;
 }

@@ -12,5 +12,5 @@ export class CourseValueDto {
   @IsNotEmpty()
   location: string;
   courses: CoursesEntity;
-  template: SchedulerTemplateEntity;
+  scheduler: SchedulerTemplateEntity;
 }

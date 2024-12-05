@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CoursePositionEntity } from '../../coursePosition/entity/coursePosition.entity';
@@ -32,11 +33,11 @@ export class CoursesEntity extends BaseEntity {
   @Column({ name: 'isNew', nullable: false, type: 'boolean' })
   isNew: boolean;
 
-  @OneToMany(
+  @OneToOne(
     () => CoursePositionEntity,
     (coursePosition) => coursePosition.courses,
   )
-  coursePosition: CoursePositionEntity[];
+  coursePosition: CoursePositionEntity;
 
   @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses)
   courseValues: CourseValueEntity[];

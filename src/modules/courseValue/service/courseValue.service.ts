@@ -27,23 +27,27 @@ export class CourseValueService {
     return courseValues;
   }
 
+  async getCourseValue(id: number) {
+    return await this.courseValueRepository.findOne({ where: { id } });
+  }
+
   async createCourseValue(courseValueDto: CourseValueDto) {
     const newCourseValue = await this.courseValueRepository.create({
       lecture: courseValueDto.lecture,
-      courses: courseValueDto.courses,
       location: courseValueDto.location,
-      scheduler: courseValueDto.template,
+      courses: courseValueDto.courses,
+      scheduler: courseValueDto.scheduler,
     });
     return await this.courseValueRepository.save(newCourseValue);
   }
 
-  async existsCourseValue(courseValueDto: CourseValueDto){
+  async existsCourseValue(courseValueDto: CourseValueDto) {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
         courses: courseValueDto.courses,
         lecture: courseValueDto.lecture,
         location: courseValueDto.location,
-        scheduler: courseValueDto.template,
+        scheduler: courseValueDto.scheduler,
       },
     });
     return !!existingValue; // Returns true if a match is found
