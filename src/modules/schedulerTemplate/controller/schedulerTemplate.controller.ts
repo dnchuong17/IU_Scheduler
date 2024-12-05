@@ -1,6 +1,14 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { SchedulerTemplateDto } from "../dto/scheduler-Template.dto";
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {
@@ -16,8 +24,18 @@ export class SchedulerTemplateController {
     return this.templateService.getTemplate(id);
   }
 
-  // @Post('create/:id')
-  // createTemplate(@Param('id') userId: number) {
-  // //   return this.templateService.createTemplate(userId);
-  // }
+  @Post('create')
+  createTemplate(@Body() templateDto: SchedulerTemplateDto) {
+    try {
+      this.logger.debug('[CREATE TEMPLATE]: Receive request creating template');
+      return this.templateService.createTemplate(templateDto);
+    } catch (error) {
+      throw new BadRequestException('Cant sync data from schedule');
+    }
+  }
+
+  @Post('createSchedule')
+  createScheduler(@Body() schedulerTemplateDto: SchedulerTemplateDto) {
+    return this.templateService.createSchedule(schedulerTemplateDto);
+  }
 }

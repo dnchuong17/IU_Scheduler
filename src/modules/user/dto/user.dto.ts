@@ -2,5 +2,5 @@ export class UserDto {
   email: string;
   password: string;
   name: string;
-  studentID: string;
+  student_id: string;
 }
