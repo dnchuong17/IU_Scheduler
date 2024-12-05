@@ -34,9 +34,9 @@ export class CourseValueService {
   async createCourseValue(courseValueDto: CourseValueDto) {
     const newCourseValue = await this.courseValueRepository.create({
       lecture: courseValueDto.lecture,
-      courses: courseValueDto.courses,
       location: courseValueDto.location,
-      scheduler: courseValueDto.template,
+      courses: courseValueDto.courses,
+      scheduler: courseValueDto.scheduler,
     });
     return await this.courseValueRepository.save(newCourseValue);
   }
@@ -47,7 +47,7 @@ export class CourseValueService {
         courses: courseValueDto.courses,
         lecture: courseValueDto.lecture,
         location: courseValueDto.location,
-        scheduler: courseValueDto.template,
+        scheduler: courseValueDto.scheduler,
       },
     });
     return !!existingValue; // Returns true if a match is found
