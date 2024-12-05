@@ -9,7 +9,7 @@ import { UserService } from '../../user/service/user.service';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
-import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
+import { SchedulerTemplateDto } from '../dto/schedulerTemplate.dto';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -89,8 +89,12 @@ export class ScheduleTemplateService {
                 lecture: lecturer,
                 location: location,
                 courses: courses,
-                template: existedTemplate,
+                scheduler: existedTemplate,
               });
+          }
+          // If we can find the course in database with the reponse courseID => update coursePosition
+          else {
+
           }
         }
       }

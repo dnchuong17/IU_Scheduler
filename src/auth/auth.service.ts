@@ -14,7 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { plainToInstance } from 'class-transformer';
 
 import { SyncDataService } from '../modules/sync/service/sync-data.service';
-import { SchedulerTemplateDto } from '../modules/schedulerTemplate/dto/scheduler-Template.dto';
+import { SchedulerTemplateDto } from '../modules/schedulerTemplate/dto/schedulerTemplate.dto';
 import { UserService } from '../modules/user/service/user.service';
 import { UserEntity } from '../modules/user/entity/user.entity';
 import { EmailValidationHelper } from '../modules/validation/service/email-validation.helper';
