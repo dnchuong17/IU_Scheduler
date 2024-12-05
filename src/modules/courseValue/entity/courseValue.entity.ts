@@ -21,7 +21,7 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'location', nullable: false })
   location: string;
 
-  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
+  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues, {onDelete: 'CASCADE'})
   courses: CoursesEntity;
 
   @ManyToOne(() => SchedulerTemplateEntity, (scheduler) => scheduler.courseValues)

@@ -132,6 +132,12 @@ export class ScheduleTemplateService {
             existedCourse,
             existedTemplate,
           );
+        } else {
+          await this.deleteCourse(
+            schedulerTemplateDto,
+            existedCourse,
+            existedTemplate,
+          );
         }
       }
     }
@@ -163,6 +169,36 @@ export class ScheduleTemplateService {
         credits: course.credits,
         isNew: true,
       });
+    }
+  }
+
+  async deleteCourse(
+    schedulerTemplateDto: SchedulerTemplateDto,
+    existedCourse: CoursesEntity,
+    existedTemplate: SchedulerTemplateEntity,
+  ) {
+    for (const course of schedulerTemplateDto.listOfCourses) {
+      if (course.isDeleted) {
+        await this.coursePositonService.deleteCoursePos({
+          days: course.date,
+          periods: course.periodsCount,
+          startPeriod: course.startPeriod,
+          courses: existedCourse,
+          scheduler: existedTemplate,
+        });
+        await this.courseValueService.deleteCourseValue({
+          lecture: course.lecturer,
+          location: course.location,
+          courses: existedCourse,
+          scheduler: existedTemplate,
+        });
+        await this.coursesService.deleteCourse({
+          courseCode: course.courseID,
+          name: course.courseName,
+          credits: course.credits,
+          isNew: true,
+        });
+      }
     }
   }
 
