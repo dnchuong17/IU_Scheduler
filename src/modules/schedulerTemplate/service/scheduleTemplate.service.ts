@@ -10,6 +10,7 @@ import { CoursePositionService } from '../../coursePosition/service/coursePositi
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
+import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -91,6 +92,31 @@ export class ScheduleTemplateService {
                 courses: courses,
                 scheduler: existedTemplate,
               });
+          }
+          // If we can find one course in database with the reponse courseID => update course position
+          else {
+            // update course
+            await this.coursesService.updateCourse({
+              courseCode: courseID,
+              name: courseName,
+              credits: credits,
+              isNew: true,
+            });
+            // update course position
+            await this.coursePositonService.updateCoursePos({
+              days: date,
+              periods: periodsCount,
+              startPeriod: startPeriod,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
+            // update course value
+            await this.courseValueService.updateCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
           }
         }
       }

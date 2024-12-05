@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CoursesDto } from '../dto/courses.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -46,5 +46,21 @@ export class CoursesService {
     const query = `SELECT * FROM courses WHERE course_code = $1`;
     const course = await this.dataSource.query(query, [coursesCode]);
     return course.length > 0 ? course[0] : null;
+  }
+
+  async updateCourse(courseDto: CoursesDto) {
+    const course = await this.coursesRepository.findOne({
+      where: { courseCode: courseDto.courseCode },
+    });
+    if (!course) {
+      throw new NotFoundException(
+        `Course with code ${courseDto.courseCode} not found`,
+      );
+    }
+    this.logger.debug(
+      `[UPDATE COURSE] update course with course code: ${courseDto.courseCode} successfully!`,
+    );
+    Object.assign(course, courseDto);
+    return await this.coursesRepository.save(course);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CourseValueEntity } from '../entity/courseValue.entity';
@@ -51,5 +51,26 @@ export class CourseValueService {
       },
     });
     return !!existingValue; // Returns true if a match is found
+  }
+
+  async updateCourseValue(courseValueDto: CourseValueDto) {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        courses: { id: courseValueDto.courses.id },
+        scheduler: { id: courseValueDto.scheduler.id },
+      },
+    });
+
+    if (!existingCourseValue) {
+      throw new NotFoundException('Course value not found');
+    }
+
+    existingCourseValue.lecture = courseValueDto.lecture;
+    existingCourseValue.location = courseValueDto.location;
+
+    this.logger.debug(
+      `[UPDATE COURSE VALUE] update course value with course value's ID: ${existingCourseValue.id} successfully!`,
+    );
+    return await this.courseValueRepository.save(existingCourseValue);
   }
 }
