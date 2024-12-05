@@ -11,6 +11,7 @@ import { CourseValueService } from '../../courseValue/service/courseValue.servic
 import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -53,6 +54,8 @@ export class ScheduleTemplateService {
         schedulerTemplateDto.templateId,
       );
       if (existedTemplate !== null) {
+        let existedCourse: CoursesEntity | null = null;
+
         for (const course of schedulerTemplateDto.listOfCourses) {
           const {
             courseID,
@@ -67,7 +70,7 @@ export class ScheduleTemplateService {
             isDeleted,
           } = course;
           // If we can not find any course in database with the reponse courseID => create new course => new coursePosition => new course Value
-          const existedCourse =
+          existedCourse =
             await this.coursesService.findCourseByCourseCode(courseID);
 
           if (!existedCourse) {
@@ -119,11 +122,48 @@ export class ScheduleTemplateService {
             });
           }
         }
+        const allCoursesDeleted = schedulerTemplateDto.listOfCourses.every(
+          (course) => course.isDeleted,
+        );
+        // If all isDeleted variables inside the listOfCourse array is true => delete all course
+        if (allCoursesDeleted) {
+          await this.deleteAllCourse(
+            schedulerTemplateDto,
+            existedCourse,
+            existedTemplate,
+          );
+        }
       }
     }
+  }
 
-    // New funcion delete if Isdeleted === true
-    // New function delete all: isDeleted of all course value === true => recall above function
+  // Delete all course
+  async deleteAllCourse(
+    schedulerTemplateDto: SchedulerTemplateDto,
+    existedCourse: CoursesEntity,
+    existedTemplate: SchedulerTemplateEntity,
+  ) {
+    for (const course of schedulerTemplateDto.listOfCourses) {
+      await this.coursePositonService.deleteCoursePos({
+        days: course.date,
+        periods: course.periodsCount,
+        startPeriod: course.startPeriod,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
+      await this.courseValueService.deleteCourseValue({
+        lecture: course.lecturer,
+        location: course.location,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
+      await this.coursesService.deleteCourse({
+        courseCode: course.courseID,
+        name: course.courseName,
+        credits: course.credits,
+        isNew: true,
+      });
+    }
   }
 
   async createTemplate(templateDto: SchedulerTemplateDto) {

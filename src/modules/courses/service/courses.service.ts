@@ -63,4 +63,22 @@ export class CoursesService {
     Object.assign(course, courseDto);
     return await this.coursesRepository.save(course);
   }
+
+  async deleteCourse(courseDto: CoursesDto): Promise<void> {
+    const course = await this.coursesRepository.findOne({
+      where: { courseCode: courseDto.courseCode },
+    });
+
+    if (!course) {
+      throw new NotFoundException(
+        `Course with code ${courseDto.courseCode} not found`,
+      );
+    }
+
+    await this.coursesRepository.delete({ courseCode: courseDto.courseCode });
+
+    this.logger.debug(
+      `[DELETE COURSE] Deleted course with course code: ${courseDto.courseCode} successfully!`,
+    );
+  }
 }

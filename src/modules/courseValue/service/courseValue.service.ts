@@ -73,4 +73,25 @@ export class CourseValueService {
     );
     return await this.courseValueRepository.save(existingCourseValue);
   }
+
+  async deleteCourseValue(courseValueDto: CourseValueDto): Promise<void> {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        courses: { id: courseValueDto.courses.id },
+        scheduler: { id: courseValueDto.scheduler.id },
+      },
+    });
+
+    if (!existingCourseValue) {
+      throw new NotFoundException('Course value not found');
+    }
+
+    await this.courseValueRepository.delete({
+      id: existingCourseValue.id,
+    });
+
+    this.logger.debug(
+      `[DELETE COURSE VALUE] Deleted course value with ID: ${existingCourseValue.id} successfully!`,
+    );
+  }
 }
