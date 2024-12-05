@@ -12,6 +12,5 @@ export class CoursePositionDto {
   periods: number;
   startPeriod: number;
   courses: CoursesEntity;
-
   scheduler: SchedulerTemplateEntity;
 }
