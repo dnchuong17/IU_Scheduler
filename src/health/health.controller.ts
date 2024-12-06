@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { dataSource } from '../config/dataSource';
-import { HealthCheckService, HttpHealthIndicator, HealthCheck, TypeOrmHealthIndicator } from '@nestjs/terminus';
+import { HealthCheckService, HttpHealthIndicator, TypeOrmHealthIndicator } from '@nestjs/terminus';
 
 @Controller('health')
 export class HealthController {
