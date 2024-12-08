@@ -41,6 +41,7 @@ export const syncPoolConfig = [
     provide: SYNC_PROCESSOR,
     inject: [SYNC_DATA_SERVICE, REDIS_CONFIG],
     useFactory: (processor: SyncDataService, redisConfig: RedisConfig) => {
+      console.log('if worker work');
       return new Worker(
         'queue',
         async (job) => {

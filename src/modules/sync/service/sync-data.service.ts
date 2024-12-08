@@ -211,14 +211,17 @@ export class SyncDataService {
         '(template.lastsynctime < :date OR template.lastsynctime IS NULL)',
         { date: startTime },
       )
-      .select('studentUser.id') // Ensure you select the required fields
       .getMany();
 
     this.logger.debug(`Total found ${studentIds.length} studentIds`);
 
-    const filerStudent = studentIds.filter((student) =>
-      studentIdList.includes(student.studentID),
+    let filerStudent = studentIds.filter((student) =>
+      studentIdList?.includes(student.studentID),
     );
+    if (filerStudent.length === 0) {
+      filerStudent = studentIds;
+    }
+    console.log(filerStudent);
 
     this.logger.debug(`Total filtered out ${filerStudent.length} studentIds`);
     for (const userEntity of filerStudent) {
@@ -231,17 +234,15 @@ export class SyncDataService {
         removeOnFail: true,
         jobId: userEntity.studentID,
       });
-      this.logger.debug('sync successfully');
     }
   }
   async getJobCount() {
-    return await this.syncQueue.getJob('ITCSIU22252');
+    return await this.syncQueue.getJobCounts();
   }
 
   async syncDataFromSchedule(id: string) {
     const startAt = new Date();
     const checkKey = await this.redisHelper.get(RedisSyncKey);
-    console.log(checkKey);
     this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
     const syncReq: SyncRequestDto = <SyncRequestDto>{
       syncEvent: SYNC_EVENT_FROM_SCHEDULE,
@@ -277,7 +278,9 @@ export class SyncDataService {
     const template = await this.schedulerService.getTemplateBySID(id);
     console.log(template);
     if (!template) {
-      this.logger.error(`[SYNC DATA FROM SCHEDULE] Template not found for ID: ${id}`);
+      this.logger.error(
+        `[SYNC DATA FROM SCHEDULE] Template not found for ID: ${id}`,
+      );
     }
     const allCourseDetails = [];
     const allCoursePositions: CoursePositionDto[] = [];
@@ -313,7 +316,9 @@ export class SyncDataService {
 
           const course = courseCodeMap.get(baseCourseCode);
           if (!course) {
-            this.logger.error(`[SYNC DATA FROM SCHEDULE] Course not found for code: ${baseCourseCode}`);
+            this.logger.error(
+              `[SYNC DATA FROM SCHEDULE] Course not found for code: ${baseCourseCode}`,
+            );
           }
           const dayOfWeek = params[3].replace(/^'|'$/g, '');
           const startPeriodStr = params[6].replace(/^'|'$/g, '');
