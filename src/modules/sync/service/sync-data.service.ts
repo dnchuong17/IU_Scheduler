@@ -221,7 +221,6 @@ export class SyncDataService {
     if (filerStudent.length === 0) {
       filerStudent = studentIds;
     }
-    console.log(filerStudent);
 
     this.logger.debug(`Total filtered out ${filerStudent.length} studentIds`);
     for (const userEntity of filerStudent) {
@@ -233,170 +232,177 @@ export class SyncDataService {
         removeOnComplete: true,
         removeOnFail: true,
         jobId: userEntity.studentID,
+        delay: 0,
       });
     }
   }
   async getJobCount() {
+    // const failedJobs = await this.syncQueue.getFailed();
+    //
+    // for (const job of failedJobs) {
+    //   console.log(`Removing failed job ID: ${job.id}`);
+    //   await job.remove();
+    // }
     return await this.syncQueue.getJobCounts();
   }
 
   async syncDataFromSchedule(id: string) {
-    const startAt = new Date();
-    const checkKey = await this.redisHelper.get(RedisSyncKey);
-    this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
-    const syncReq: SyncRequestDto = <SyncRequestDto>{
-      syncEvent: SYNC_EVENT_FROM_SCHEDULE,
-      startTime: startAt,
-    };
-    if (!checkKey) {
-      syncReq.status = false;
-      syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
-      await this.createSyncEvent(syncReq);
-      this.logger.debug('[SYNC DATA FROM SCHEDULE] missing session id');
-      return;
-    }
-    const courses = await this.courseService.getCourses();
-    const courseCodeMap = new Map<string, CoursesEntity>();
+    try {
+      const startAt = new Date();
+      const checkKey = await this.redisHelper.get(RedisSyncKey);
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
+      const syncReq: SyncRequestDto = <SyncRequestDto>{
+        syncEvent: SYNC_EVENT_FROM_SCHEDULE,
+        startTime: startAt,
+      };
+      if (!checkKey) {
+        syncReq.status = false;
+        syncReq.failReason = SyncFailReason.MISS_SESSION_ID;
+        await this.createSyncEvent(syncReq);
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] missing session id');
+        return;
+      }
+      const courses = await this.courseService.getCourses();
+      const courseCodeMap = new Map<string, CoursesEntity>();
 
-    courses.forEach((course) => {
-      const baseCourseCode = course.courseCode
-        .substring(0, 8)
-        .trim()
-        .toUpperCase();
-      courseCodeMap.set(baseCourseCode, course);
-    });
+      courses.forEach((course) => {
+        const baseCourseCode = course.courseCode
+          .substring(0, 8)
+          .trim()
+          .toUpperCase();
+        courseCodeMap.set(baseCourseCode, course);
+      });
 
-    const response = await this.instance.get(
-      `/Default.aspx?page=thoikhoabieu&sta=0&id=${id}`,
-      {
-        headers: {
-          Cookie: checkKey,
+      const response = await this.instance.get(
+        `/Default.aspx?page=thoikhoabieu&sta=0&id=${id}`,
+        {
+          headers: {
+            Cookie: checkKey,
+          },
         },
-      },
-    );
-    const $ = cheerio.load(response.data);
-    const template = await this.schedulerService.getTemplateBySID(id);
-    console.log(template);
-    if (!template) {
-      this.logger.error(
-        `[SYNC DATA FROM SCHEDULE] Template not found for ID: ${id}`,
       );
-    }
-    const allCourseDetails = [];
-    const allCoursePositions: CoursePositionDto[] = [];
+      const $ = cheerio.load(response.data);
+      const template = await this.schedulerService.getTemplateBySID(id);
+      if (!template) {
+        this.logger.error(
+          `[SYNC DATA FROM SCHEDULE] Template not found for ID: ${id}`,
+        );
+      }
+      const allCourseDetails = [];
+      const allCoursePositions: CoursePositionDto[] = [];
 
-    $('td[onmouseover^="ddrivetip"]').each((index, element) => {
-      const onmouseoverAttr = $(element).attr('onmouseover');
+      $('td[onmouseover^="ddrivetip"]').each((index, element) => {
+        const onmouseoverAttr = $(element).attr('onmouseover');
 
-      if (onmouseoverAttr) {
-        const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
-        if (paramsString) {
-          // Split the parameters and remove all single quotes
-          const params = paramsString
-            .split(',')
-            .map((param) => param.replace(/'/g, '').trim());
+        if (onmouseoverAttr) {
+          const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
+          if (paramsString) {
+            // Split the parameters and remove all single quotes
+            const params = paramsString
+              .split(',')
+              .map((param) => param.replace(/'/g, '').trim());
 
-          const courseCode = params[2].trim().toUpperCase(); // Extracting the course code from params
+            const courseCode = params[2].trim().toUpperCase(); // Extracting the course code from params
 
-          const baseCourseCodeMatch = courseCode.match(/^([A-Z0-9]+)/);
-          let baseCourseCode = baseCourseCodeMatch
-            ? baseCourseCodeMatch[0].trim().toUpperCase()
-            : '';
-          baseCourseCode = baseCourseCode.replace(/'/g, ''); // Remove single quotes if any
+            const baseCourseCodeMatch = courseCode.match(/^([A-Z0-9]+)/);
+            let baseCourseCode = baseCourseCodeMatch
+              ? baseCourseCodeMatch[0].trim().toUpperCase()
+              : '';
+            baseCourseCode = baseCourseCode.replace(/'/g, ''); // Remove single quotes if any
 
-          this.logger.debug(
-            `[SYNC DATA FROM SCHEDULE] Comparing extracted course code: ${baseCourseCode} against map.`,
-          );
-          if (!courseCodeMap.has(baseCourseCode)) {
             this.logger.debug(
-              `[SYNC DATA FROM SCHEDULE] No match found for extracted course code: ${baseCourseCode}`,
+              `[SYNC DATA FROM SCHEDULE] Comparing extracted course code: ${baseCourseCode} against map.`,
             );
-            return;
-          }
+            if (!courseCodeMap.has(baseCourseCode)) {
+              this.logger.debug(
+                `[SYNC DATA FROM SCHEDULE] No match found for extracted course code: ${baseCourseCode}`,
+              );
+              return;
+            }
 
-          const course = courseCodeMap.get(baseCourseCode);
-          if (!course) {
-            this.logger.error(
-              `[SYNC DATA FROM SCHEDULE] Course not found for code: ${baseCourseCode}`,
-            );
-          }
-          const dayOfWeek = params[3].replace(/^'|'$/g, '');
-          const startPeriodStr = params[6].replace(/^'|'$/g, '');
-          const location = params[5].replace(/^'|'$/g, '');
-          const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
-          const lecture = params[8].replace(/^'|'$/g, '');
+            const course = courseCodeMap.get(baseCourseCode);
+            if (!course) {
+              this.logger.error(
+                `[SYNC DATA FROM SCHEDULE] Course not found for code: ${baseCourseCode}`,
+              );
+            }
+            const dayOfWeek = params[3].replace(/^'|'$/g, '');
+            const startPeriodStr = params[6].replace(/^'|'$/g, '');
+            const location = params[5].replace(/^'|'$/g, '');
+            const numberOfPeriodsStr = params[7].replace(/^'|'$/g, '');
+            const lecture = params[8].replace(/^'|'$/g, '');
 
-          const startPeriod = startPeriodStr
-            ? parseInt(startPeriodStr, 10)
-            : null;
-          const numberOfPeriods = numberOfPeriodsStr
-            ? parseInt(numberOfPeriodsStr, 10)
-            : null;
-          this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
-          const coursePosDto = plainToInstance(CoursePositionDto, {
-            days: dayOfWeek,
-            periods: numberOfPeriods,
-            startPeriod: startPeriod,
-            scheduler: template,
-            courses: course,
-          });
-          console.log(coursePosDto.scheduler);
-          allCoursePositions.push(coursePosDto);
-          const courseValueDto = plainToInstance(CourseValueDto, {
-            lecture,
-            location,
-            numberOfPeriods,
-            courses: course,
-            scheduler: template,
-          });
-          allCourseDetails.push(courseValueDto);
+            const startPeriod = startPeriodStr
+              ? parseInt(startPeriodStr, 10)
+              : null;
+            const numberOfPeriods = numberOfPeriodsStr
+              ? parseInt(numberOfPeriodsStr, 10)
+              : null;
+            this.logger.debug('[SYNC DATA FROM SCHEDULE] Create course value');
+            const coursePosDto = plainToInstance(CoursePositionDto, {
+              days: dayOfWeek,
+              periods: numberOfPeriods,
+              startPeriod: startPeriod,
+              scheduler: template,
+              courses: course,
+            });
+            allCoursePositions.push(coursePosDto);
+            const courseValueDto = plainToInstance(CourseValueDto, {
+              lecture,
+              location,
+              numberOfPeriods,
+              courses: course,
+              scheduler: template,
+            });
+            allCourseDetails.push(courseValueDto);
+          }
         }
-      }
-    });
-    console.log(allCoursePositions);
-    for (const coursePosDto of allCoursePositions) {
-      const coursePosExists =
-        await this.coursePosService.existsCoursePosition(coursePosDto);
-
-      if (coursePosExists) {
-        this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
-        continue;
-      }
-      console.log(coursePosDto);
-
-      let newCourseValueCreated = false;
+      });
       for (const coursePosDto of allCoursePositions) {
         const coursePosExists =
           await this.coursePosService.existsCoursePosition(coursePosDto);
-        if (coursePosExists) continue;
-      }
-      await this.coursePosService.createCoursePos(coursePosDto);
 
-      this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
-      for (const courseValueDto of allCourseDetails) {
-        const courseExists =
-          await this.courseValueService.existsCourseValue(courseValueDto);
-
-        if (courseExists) {
-          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+        if (coursePosExists) {
+          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
           continue;
         }
-        await this.courseValueService.createCourseValue(courseValueDto);
-        newCourseValueCreated = true;
-        this.logger.debug(
-          '[SYNC DATA FROM SCHEDULE] Create course value successfully',
-        );
-        console.log(courses);
+
+        let newCourseValueCreated = false;
+        for (const coursePosDto of allCoursePositions) {
+          const coursePosExists =
+            await this.coursePosService.existsCoursePosition(coursePosDto);
+          if (coursePosExists) continue;
+        }
+        await this.coursePosService.createCoursePos(coursePosDto);
+
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+        for (const courseValueDto of allCourseDetails) {
+          const courseExists =
+            await this.courseValueService.existsCourseValue(courseValueDto);
+
+          if (courseExists) {
+            this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course value');
+            continue;
+          }
+          await this.courseValueService.createCourseValue(courseValueDto);
+          newCourseValueCreated = true;
+          this.logger.debug(
+            '[SYNC DATA FROM SCHEDULE] Create course value successfully',
+          );
+        }
+        syncReq.status = newCourseValueCreated;
+        syncReq.finishTime = new Date();
+        syncReq.failReason = newCourseValueCreated
+          ? null
+          : SyncFailReason.EXISTED_COURSE_VALUE;
+        await this.createSyncEvent(syncReq);
+        this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
       }
-      syncReq.status = newCourseValueCreated;
-      syncReq.finishTime = new Date();
-      syncReq.failReason = newCourseValueCreated
-        ? null
-        : SyncFailReason.EXISTED_COURSE_VALUE;
-      await this.createSyncEvent(syncReq);
-      this.logger.debug('[SYNC DATA FROM SCHEDULE] Create sync event');
+      return response.data;
+    } catch (err) {
+      console.error(`Error syncing data for student :`, err);
+      throw err;
     }
-    return response.data;
   }
 
   async syncRealtime(syncRealtimeReq: SyncRealtimeRequestDto) {
