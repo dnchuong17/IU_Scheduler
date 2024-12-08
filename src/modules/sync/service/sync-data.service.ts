@@ -250,6 +250,7 @@ export class SyncDataService {
     try {
       const startAt = new Date();
       const checkKey = await this.redisHelper.get(RedisSyncKey);
+      console.log(checkKey);
       this.logger.debug('[SYNC DATA FROM SCHEDULE] Check check key');
       const syncReq: SyncRequestDto = <SyncRequestDto>{
         syncEvent: SYNC_EVENT_FROM_SCHEDULE,
@@ -293,7 +294,6 @@ export class SyncDataService {
 
       $('td[onmouseover^="ddrivetip"]').each((index, element) => {
         const onmouseoverAttr = $(element).attr('onmouseover');
-
         if (onmouseoverAttr) {
           const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
           if (paramsString) {
@@ -363,7 +363,9 @@ export class SyncDataService {
           await this.coursePosService.existsCoursePosition(coursePosDto);
 
         if (coursePosExists) {
-          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
+          this.logger.debug(
+            '[SYNC DATA FROM SCHEDULE] Existed course position',
+          );
           continue;
         }
 
@@ -375,7 +377,9 @@ export class SyncDataService {
         }
         await this.coursePosService.createCoursePos(coursePosDto);
 
-        this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] Check existed course value',
+        );
         for (const courseValueDto of allCourseDetails) {
           const courseExists =
             await this.courseValueService.existsCourseValue(courseValueDto);
