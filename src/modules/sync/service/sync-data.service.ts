@@ -297,7 +297,6 @@ export class SyncDataService {
         if (onmouseoverAttr) {
           const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
           if (paramsString) {
-            // Split the parameters and remove all single quotes
             const params = paramsString
               .split(',')
               .map((param) => param.replace(/'/g, '').trim());
@@ -363,7 +362,9 @@ export class SyncDataService {
           await this.coursePosService.existsCoursePosition(coursePosDto);
 
         if (coursePosExists) {
-          this.logger.debug('[SYNC DATA FROM SCHEDULE] Existed course position');
+          this.logger.debug(
+            '[SYNC DATA FROM SCHEDULE] Existed course position',
+          );
           continue;
         }
 
@@ -375,7 +376,9 @@ export class SyncDataService {
         }
         await this.coursePosService.createCoursePos(coursePosDto);
 
-        this.logger.debug('[SYNC DATA FROM SCHEDULE] Check existed course value');
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] Check existed course value',
+        );
         for (const courseValueDto of allCourseDetails) {
           const courseExists =
             await this.courseValueService.existsCourseValue(courseValueDto);
