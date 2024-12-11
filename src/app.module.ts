@@ -21,6 +21,7 @@ import { typeOrmConfigAsync } from './config/typeorm.config';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './modules/user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { NoteModule } from './modules/note/note.module';
 dotenv.config();
 
 @Module({
@@ -39,6 +40,7 @@ dotenv.config();
     AuthModule,
     ScheduleTemplateModule,
     TracingLoggerModule,
+    NoteModule,
     DeadlineModule,
     PoolModule,
     SyncModule,

@@ -219,6 +219,7 @@ export class ScheduleTemplateService {
 
     const query = `
       SELECT 
+        st.scheduler_id,
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
@@ -254,6 +255,7 @@ export class ScheduleTemplateService {
 
     const query = `
       SELECT 
+        st.scheduler_id,
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
