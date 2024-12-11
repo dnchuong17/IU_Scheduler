@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from "typeorm";
 import { CourseValueEntity } from '../entity/courseValue.entity';
 import { CourseValueDto } from '../dto/courseValue.dto';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
@@ -31,14 +31,46 @@ export class CourseValueService {
     return await this.courseValueRepository.findOne({ where: { id } });
   }
 
-  async createCourseValue(courseValueDto: CourseValueDto) {
-    const newCourseValue = await this.courseValueRepository.create({
-      lecture: courseValueDto.lecture,
-      location: courseValueDto.location,
-      courses: courseValueDto.courses,
-      scheduler: courseValueDto.scheduler,
-    });
-    return await this.courseValueRepository.save(newCourseValue);
+  async createCourseValue(
+    courseValueDto: CourseValueDto,
+    entityManager?: EntityManager,
+  ) {
+    try {
+      const manager = entityManager || this.courseValueRepository.manager;
+
+      if (
+        !courseValueDto.lecture ||
+        !courseValueDto.location ||
+        !courseValueDto.courses ||
+        !courseValueDto.scheduler
+      ) {
+        throw new BadRequestException(
+          'Missing required fields for CourseValue',
+        );
+      }
+
+      // Tạo thực thể mới
+      const newCourseValue = manager.create(CourseValueEntity, {
+        lecture: courseValueDto.lecture,
+        location: courseValueDto.location,
+        courses: courseValueDto.courses,
+        scheduler: courseValueDto.scheduler,
+      });
+      const savedCourseValue = await manager.save(newCourseValue);
+
+      this.logger.debug(
+        `[CREATE COURSE VALUE] Created successfully: ${JSON.stringify(
+          savedCourseValue,
+        )}`,
+      );
+
+      return savedCourseValue;
+    } catch (error) {
+      this.logger.error(
+        `[CREATE COURSE VALUE] Failed to create CourseValue: ${error.message}`,
+      );
+      throw error;
+    }
   }
 
   async existsCourseValue(courseValueDto: CourseValueDto) {
