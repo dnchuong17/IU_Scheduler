@@ -12,6 +12,7 @@ import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { NoteService } from '../../note/service/note.service';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -25,6 +26,7 @@ export class ScheduleTemplateService {
     private readonly courseValueService: CourseValueService,
     private readonly coursePositonService: CoursePositionService,
     private readonly coursesService: CoursesService,
+    private readonly noteService: NoteService,
   ) {}
 
   async findTemplateWithId(id: number) {
@@ -66,6 +68,7 @@ export class ScheduleTemplateService {
             credits,
             location,
             lecturer,
+            note,
             isActive,
             isDeleted,
           } = course;
@@ -95,6 +98,10 @@ export class ScheduleTemplateService {
                 courses: courses,
                 scheduler: existedTemplate,
               });
+            const newDefaultNote = await this.noteService.createNote({
+              content: note,
+              courseValue: newCourseValue,
+            });
           }
           // If we can find one course in database with the reponse courseID => update course position
           else {
@@ -137,6 +144,18 @@ export class ScheduleTemplateService {
               courses: existedCourse,
               scheduler: existedTemplate,
             });
+            // update note
+            const foundCourseValue =
+              await this.courseValueService.findCourseValue({
+                courses: existedCourse,
+                scheduler: existedTemplate,
+                lecture: lecturer,
+                location: location,
+              });
+            await this.noteService.updateNote(foundCourseValue.id, {
+              content: note,
+              courseValue: foundCourseValue,
+            });
           }
         }
       }
@@ -150,16 +169,16 @@ export class ScheduleTemplateService {
     existedTemplate: SchedulerTemplateEntity,
   ) {
     for (const course of schedulerTemplateDto.listOfCourses) {
+      await this.courseValueService.deleteCourseValue({
+        lecture: course.lecturer,
+        location: course.location,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
       await this.coursePositonService.deleteCoursePos({
         days: course.date,
         periods: course.periodsCount,
         startPeriod: course.startPeriod,
-        courses: existedCourse,
-        scheduler: existedTemplate,
-      });
-      await this.courseValueService.deleteCourseValue({
-        lecture: course.lecturer,
-        location: course.location,
         courses: existedCourse,
         scheduler: existedTemplate,
       });
@@ -179,16 +198,16 @@ export class ScheduleTemplateService {
   ) {
     for (const course of schedulerTemplateDto.listOfCourses) {
       if (course.isDeleted) {
+        await this.courseValueService.deleteCourseValue({
+          lecture: course.lecturer,
+          location: course.location,
+          courses: existedCourse,
+          scheduler: existedTemplate,
+        });
         await this.coursePositonService.deleteCoursePos({
           days: course.date,
           periods: course.periodsCount,
           startPeriod: course.startPeriod,
-          courses: existedCourse,
-          scheduler: existedTemplate,
-        });
-        await this.courseValueService.deleteCourseValue({
-          lecture: course.lecturer,
-          location: course.location,
           courses: existedCourse,
           scheduler: existedTemplate,
         });

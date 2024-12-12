@@ -39,6 +39,8 @@ export class CourseValueEntity extends BaseEntity {
   @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)
   deadlines: DeadlineEntity[];
 
-  @OneToOne(() => NoteEntity, (note) => note.courseValues)
+  @OneToOne(() => NoteEntity, (note) => note.courseValues, {
+    onDelete: 'CASCADE',
+  })
   note: NoteEntity;
 }

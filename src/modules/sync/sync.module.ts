@@ -25,6 +25,7 @@ import { TracingLoggerService } from '../../logger/tracing-logger.service';
 import { RedisHelper } from '../redis/service/redis.service';
 import { ConfigService } from '@nestjs/config';
 import { TracingLoggerModule } from '../../logger/tracinglogger.module';
+import { NoteModule } from "../note/note.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { TracingLoggerModule } from '../../logger/tracinglogger.module';
       CoursePositionEntity,
       SyncRealTimeEntity,
     ]),
+    NoteModule,
   ],
   controllers: [SyncController],
   providers: [

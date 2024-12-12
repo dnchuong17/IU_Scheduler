@@ -13,16 +13,14 @@ export class NoteEntity {
   id: number;
 
   @Column({
-    name: 'note_content',
+    name: 'content',
     nullable: true,
     type: 'varchar',
     length: 1000,
   })
-  content: string;
+  content: string | null;
 
-  @OneToOne(() => CourseValueEntity, (courseValues) => courseValues.note, {
-    onDelete: 'CASCADE',
-  })
+  @OneToOne(() => CourseValueEntity, (courseValues) => courseValues.note)
   @JoinColumn({ name: 'course_value_id' })
   courseValues: CourseValueEntity;
 }

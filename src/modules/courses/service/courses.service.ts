@@ -81,4 +81,5 @@ export class CoursesService {
       `[DELETE COURSE] Deleted course with course code: ${courseDto.courseCode} successfully!`,
     );
   }
+
 }

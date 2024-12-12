@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from "@nestjs/common";
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NoteEntity } from './entity/note.entity';
 import { NoteService } from './service/note.service';
@@ -11,11 +11,11 @@ import { CourseValueModule } from '../courseValue/courseValue.module';
   imports: [
     TypeOrmModule.forFeature([NoteEntity]),
     TracingLoggerModule,
-    ScheduleTemplateModule,
+    forwardRef(() => ScheduleTemplateModule),
     CourseValueModule,
   ],
-  providers: [NoteService],
   controllers: [NoteController],
-  exports: [TypeOrmModule],
+  providers: [NoteService],
+  exports: [NoteService],
 })
 export class NoteModule {}
