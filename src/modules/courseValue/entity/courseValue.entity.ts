@@ -22,7 +22,9 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'location', nullable: false })
   location: string;
 
-  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues, {onDelete: 'CASCADE'})
+  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues, {
+    onDelete: 'CASCADE',
+  })
   courses: CoursesEntity;
 
   @ManyToOne(
