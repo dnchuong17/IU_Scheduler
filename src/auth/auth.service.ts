@@ -121,6 +121,7 @@ export class AuthService {
       }
 
       return {
+        studentId: user.studentID,
         accessToken,
         refreshToken: refreshToken.refreshToken,
       };
