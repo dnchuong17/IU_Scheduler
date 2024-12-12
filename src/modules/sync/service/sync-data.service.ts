@@ -236,6 +236,7 @@ export class SyncDataService {
       });
     }
   }
+
   async getJobCount() {
     // const failedJobs = await this.syncQueue.getFailed();
     //
