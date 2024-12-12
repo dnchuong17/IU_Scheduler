@@ -59,7 +59,6 @@ export class SyncController {
     return this.syncService.processingSyncRealtime();
   }
 
-
   @Get('jobCount')
   getJobCount() {
     return this.syncService.getJobCount();

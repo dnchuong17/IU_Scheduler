@@ -8,6 +8,7 @@ export enum SyncFailReason {
   EXISTED_COURSE = 'course is existed',
   EXISTED_COURSE_VALUE = 'course value is existed',
   NO_NEW_COURSE_VALUE = 'no new course value is created',
+  TEMPLATE_NOT_FOUND = 'do not exist template',
 }
 export const SYNC_LOCAL = 'local';
 export const SYNC_DATA_SERVICE = 'SYNC_DATA_SERVICE';

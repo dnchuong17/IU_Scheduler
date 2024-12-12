@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { UserDto } from '../modules/user/dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,6 +25,7 @@ import { ScheduleTemplateService } from '../modules/schedulerTemplate/service/sc
 import { SYNC_EVENT_FROM_SCHEDULE } from '../modules/sync/utils/sync.constant';
 import { SyncRealtimeRequestDto } from '../modules/sync/dto/sync-realtime-request.dto';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +40,7 @@ export class AuthService {
     private readonly schedulerService: ScheduleTemplateService,
     @Inject(forwardRef(() => SyncDataService))
     private readonly syncDataService: SyncDataService,
+    private readonly configService: ConfigService,
   ) {
     logger.setContext(AuthService.name);
   }
@@ -101,52 +104,58 @@ export class AuthService {
     return null;
   }
 
-  async signIn(signIn: SigninDto) {
-    const isSignIn = await this.validateUser(signIn.email, signIn.password);
-    if (isSignIn) {
-      const user = await this.userService.findAccountWithEmail(signIn.email);
-      const payload = {
-        username: signIn.email,
-        sub: {
-          name: user.name,
-          sid: user.studentID,
-        },
-      };
-
-      const accessToken = this.jwtService.sign(payload);
-      const refreshToken = await this.refreshToken(signIn);
-
-      if (refreshToken) {
-        await this.redisHelper.set(KEY, refreshToken.refreshToken);
-      }
-
-      return {
-        accessToken,
-        refreshToken: refreshToken.refreshToken,
-      };
-    } else {
-      throw new UnauthorizedException('Invalid username or password');
+  async signIn(signInDto: SigninDto) {
+    const user = await this.validateUser(signInDto.email, signInDto.password);
+    if (!user) {
+      throw new BadRequestException('Invalid username or password');
     }
+
+    const payload = {
+      username: signInDto.email,
+      sub: {
+        name: user.name,
+        studentId: user.studentID,
+      },
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = await this.generateRefreshToken(
+      payload,
+      user.studentID,
+    );
+
+    const redisKey = `user:${user.studentID}:refreshToken`;
+    await this.redisHelper.set(redisKey, refreshToken, 604800); // Set for 7 days
+
+    return {
+      accessToken,
+      refreshToken,
+      studentId: user.studentID,
+    };
   }
 
-  async refreshToken(signIn: SigninDto) {
-    const isSignIn = await this.validateUser(signIn.email, signIn.password);
+  async generateRefreshToken(payload: any, studentId: string) {
+    return this.jwtService.sign(payload, { expiresIn: '7d' });
+  }
 
-    if (isSignIn) {
-      const user = await this.userService.findAccountWithEmail(signIn.email);
-      const payload = {
-        username: signIn.email,
-        sub: {
-          name: user.name,
-          studentId: user.studentID,
-        },
-      };
+  async refreshAccessToken(refreshToken: string) {
+    const payload = this.jwtService.verify(refreshToken);
+    const redisKey = `user:${payload.sub.studentId}:refreshToken`;
 
-      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-      return {
-        refreshToken,
-      };
+    const storedToken = await this.redisHelper.get(redisKey);
+    if (!storedToken || storedToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
+
+    const newAccessToken = this.jwtService.sign(
+      {
+        username: payload.username,
+        sub: payload.sub,
+      },
+      { expiresIn: '15m' },
+    );
+
+    return { accessToken: newAccessToken };
   }
 
   async extractUIDFromToken() {

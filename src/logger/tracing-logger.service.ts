@@ -12,8 +12,7 @@ export class TracingLoggerService extends Logger {
   }
 
   private getMessage(message: string) {
-    const traceId = this.als?.getStore().tracingId;
-    return `${[traceId]} - ${message}`;
+    return `${message}`;
   }
   // general information: request coming, request solving (status of the request)
   verbose(message: any): void {

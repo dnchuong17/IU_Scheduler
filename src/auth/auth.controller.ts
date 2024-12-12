@@ -32,19 +32,18 @@ export class AuthController {
   }
 
   @Post('login')
-  signIn(@Body() signInDto: SigninDto) {
-    try {
-      this.logger.debug('receive request login');
-      return this.authService.signIn(signInDto);
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+  async signIn(@Body() signInDto: SigninDto) {
+    this.logger.debug(`Received login request for email: ${signInDto.email}`);
+    return await this.authService.signIn(signInDto);
   }
 
   @UseGuards(RefreshJwtAuthGuard)
   @Post('refresh')
-  refreshToken(@Request() req) {
-    this.logger.debug('receive request refresh token');
-    return this.authService.refreshToken(req.user);
+  async refreshToken(@Request() req) {
+    const refreshToken = req.user.refreshToken;
+    this.logger.debug(
+      `Received refresh token request for user: ${req.user.username}`,
+    );
+    return this.authService.refreshAccessToken(refreshToken);
   }
 }
