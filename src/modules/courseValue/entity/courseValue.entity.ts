@@ -1,7 +1,8 @@
 import {
   BaseEntity,
   Column,
-  Entity, JoinColumn,
+  Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -24,7 +25,10 @@ export class CourseValueEntity extends BaseEntity {
   @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues, {onDelete: 'CASCADE'})
   courses: CoursesEntity;
 
-  @ManyToOne(() => SchedulerTemplateEntity, (scheduler) => scheduler.courseValues)
+  @ManyToOne(
+    () => SchedulerTemplateEntity,
+    (scheduler) => scheduler.courseValues,
+  )
   @JoinColumn({ name: 'schedulerId' })
   scheduler: SchedulerTemplateEntity;
 

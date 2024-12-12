@@ -5,6 +5,7 @@ import { REDIS_CONFIG } from '../../redis/redis.constant';
 import { RedisConfig } from '../../redis/dtos/redis-creation.dto';
 import { SYNC_DATA_SERVICE } from '../utils/sync.constant';
 import * as os from 'node:os';
+import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 
 export const SYNC_POOL_NAME = 'sync_pool_name';
 export const SYNC_QUEUE_NAME = 'version';
@@ -28,11 +29,10 @@ export const syncPoolConfig = [
             return Math.min(times * 50, 2000);
           },
         },
-        defaultJobOptions: bullOptions.defaultConnectionOptions,
-        streams: {
-          events: {
-            maxLen: 1000,
-          },
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: true,
+          ...bullOptions.defaultConnectionOptions,
         },
       });
     },
@@ -44,7 +44,9 @@ export const syncPoolConfig = [
       return new Worker(
         'queue',
         async (job) => {
+          console.log(`Start to process job`);
           const data = job.data;
+          console.log(data);
           await processor.syncDataFromSchedule(data.studentId);
         },
         {
@@ -58,6 +60,10 @@ export const syncPoolConfig = [
             },
           },
           concurrency: os.cpus().length,
+          limiter: {
+            max: 100,
+            duration: 1000,
+          },
         },
       );
     },
