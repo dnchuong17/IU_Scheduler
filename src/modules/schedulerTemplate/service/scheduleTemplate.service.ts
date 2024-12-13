@@ -234,6 +234,6 @@ export class ScheduleTemplateService {
       .leftJoinAndSelect('scheduler_template.user', 'user') // join bảng 'student_users'
       .where('scheduler_template.is_main_template = true')
       .andWhere('user.studentID = :sid', { sid })
-      .getOne(); // chỉ lấy 1 kết quả duy nhất (nếu có)
+      .getOne();
   }
 }

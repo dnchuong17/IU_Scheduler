@@ -130,6 +130,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      user_id: user.id,
       studentId: user.studentID,
     };
   }

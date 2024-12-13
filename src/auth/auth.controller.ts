@@ -33,8 +33,12 @@ export class AuthController {
 
   @Post('login')
   async signIn(@Body() signInDto: SigninDto) {
-    this.logger.debug(`Received login request for email: ${signInDto.email}`);
-    return await this.authService.signIn(signInDto);
+    try {
+      this.logger.debug(`Received login request for email: ${signInDto.email}`);
+      return await this.authService.signIn(signInDto);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   @UseGuards(RefreshJwtAuthGuard)
