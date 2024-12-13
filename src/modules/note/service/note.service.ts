@@ -4,9 +4,7 @@ import { NoteEntity } from '../entity/note.entity';
 import { Repository } from 'typeorm';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { NoteDto } from '../dto/note.dto';
-import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
-import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Injectable()
 export class NoteService {
@@ -15,7 +13,9 @@ export class NoteService {
     private readonly noteRepository: Repository<NoteEntity>,
     private readonly logger: TracingLoggerService,
     private readonly courseValueService: CourseValueService,
-  ) {}
+  ) {
+    this.logger.setContext(NoteService.name);
+  }
 
   async getNoteById(id: number) {
     const note = await this.noteRepository.findOne({ where: { id: id } });
