@@ -55,13 +55,13 @@ export class AuthService {
     if (existedUser) {
       throw new BadRequestException('Email already in use');
     }
-    const checkEmailResult = await this.emailValidationHelper.validateEmail(
-      userDto.email,
-    );
-    if (!checkEmailResult) {
-      this.logger.debug('Email is not real and fail to validate email');
-      throw new BadRequestException('Email is not real email');
-    }
+    // const checkEmailResult = await this.emailValidationHelper.validateEmail(
+    //   userDto.email,
+    // );
+    // if (!checkEmailResult) {
+    //   this.logger.debug('Email is not real and fail to validate email');
+    //   throw new BadRequestException('Email is not real email');
+    // }
 
     const hashPassword = await bcrypt.hash(userDto.password, 10);
     const newUser = await this.userRepository.create({

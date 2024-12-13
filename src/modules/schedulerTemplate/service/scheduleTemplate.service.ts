@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -10,6 +10,9 @@ import { CoursePositionService } from '../../coursePosition/service/coursePositi
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
+import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { NoteService } from '../../note/service/note.service';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -23,6 +26,7 @@ export class ScheduleTemplateService {
     private readonly courseValueService: CourseValueService,
     private readonly coursePositonService: CoursePositionService,
     private readonly coursesService: CoursesService,
+    private readonly noteService: NoteService,
   ) {}
 
   async findTemplateWithId(id: number) {
@@ -52,6 +56,8 @@ export class ScheduleTemplateService {
         schedulerTemplateDto.templateId,
       );
       if (existedTemplate !== null) {
+        let existedCourse: CoursesEntity | null = null;
+
         for (const course of schedulerTemplateDto.listOfCourses) {
           const {
             courseID,
@@ -62,11 +68,12 @@ export class ScheduleTemplateService {
             credits,
             location,
             lecturer,
+            note,
             isActive,
             isDeleted,
           } = course;
           // If we can not find any course in database with the reponse courseID => create new course => new coursePosition => new course Value
-          const existedCourse =
+          existedCourse =
             await this.coursesService.findCourseByCourseCode(courseID);
 
           if (!existedCourse) {
@@ -91,13 +98,127 @@ export class ScheduleTemplateService {
                 courses: courses,
                 scheduler: existedTemplate,
               });
+            const newDefaultNote = await this.noteService.createNote({
+              content: note,
+              courseValue: newCourseValue,
+            });
+          }
+          // If we can find one course in database with the reponse courseID => update course position
+          else {
+            const allCoursesDeleted = schedulerTemplateDto.listOfCourses.every(
+              (course) => course.isDeleted,
+            );
+            // If all isDeleted variables inside the listOfCourse array is true => delete all course
+            if (allCoursesDeleted) {
+              await this.deleteAllCourse(
+                schedulerTemplateDto,
+                existedCourse,
+                existedTemplate,
+              );
+            } else {
+              await this.deleteCourse(
+                schedulerTemplateDto,
+                existedCourse,
+                existedTemplate,
+              );
+            }
+            // update course
+            await this.coursesService.updateCourse({
+              courseCode: courseID,
+              name: courseName,
+              credits: credits,
+              isNew: true,
+            });
+            // update course position
+            await this.coursePositonService.updateCoursePos({
+              days: date,
+              periods: periodsCount,
+              startPeriod: startPeriod,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
+            // update course value
+            await this.courseValueService.updateCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
+            // update note
+            const foundCourseValue =
+              await this.courseValueService.findCourseValue({
+                courses: existedCourse,
+                scheduler: existedTemplate,
+                lecture: lecturer,
+                location: location,
+              });
+            await this.noteService.updateNote(foundCourseValue.id, {
+              content: note,
+              courseValue: foundCourseValue,
+            });
           }
         }
       }
     }
+  }
 
-    // New funcion delete if Isdeleted === true
-    // New function delete all: isDeleted of all course value === true => recall above function
+  // Delete all course
+  async deleteAllCourse(
+    schedulerTemplateDto: SchedulerTemplateDto,
+    existedCourse: CoursesEntity,
+    existedTemplate: SchedulerTemplateEntity,
+  ) {
+    for (const course of schedulerTemplateDto.listOfCourses) {
+      await this.courseValueService.deleteCourseValue({
+        lecture: course.lecturer,
+        location: course.location,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
+      await this.coursePositonService.deleteCoursePos({
+        days: course.date,
+        periods: course.periodsCount,
+        startPeriod: course.startPeriod,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
+      await this.coursesService.deleteCourse({
+        courseCode: course.courseID,
+        name: course.courseName,
+        credits: course.credits,
+        isNew: true,
+      });
+    }
+  }
+
+  async deleteCourse(
+    schedulerTemplateDto: SchedulerTemplateDto,
+    existedCourse: CoursesEntity,
+    existedTemplate: SchedulerTemplateEntity,
+  ) {
+    for (const course of schedulerTemplateDto.listOfCourses) {
+      if (course.isDeleted) {
+        await this.courseValueService.deleteCourseValue({
+          lecture: course.lecturer,
+          location: course.location,
+          courses: existedCourse,
+          scheduler: existedTemplate,
+        });
+        await this.coursePositonService.deleteCoursePos({
+          days: course.date,
+          periods: course.periodsCount,
+          startPeriod: course.startPeriod,
+          courses: existedCourse,
+          scheduler: existedTemplate,
+        });
+        await this.coursesService.deleteCourse({
+          courseCode: course.courseID,
+          name: course.courseName,
+          credits: course.credits,
+          isNew: true,
+        });
+      }
+    }
   }
 
   async createTemplate(templateDto: SchedulerTemplateDto) {
@@ -113,18 +234,68 @@ export class ScheduleTemplateService {
   }
 
   async getTemplate(id: number) {
-    this.logger.debug('[SCHEDULE TEMPLATE] Get template`s information');
-    const query =
-      'SELECT scheduler_template.*, course_position.*, courses.*, course_value.* FROM scheduler_template' +
-      ' LEFT JOIN course_position ON scheduler_template.scheduler_id = course_position."schedulerId"' +
-      ' LEFT JOIN courses ON courses."coursePositionId" = course_position.course_position_id' +
-      ' LEFT JOIN course_value ON course_value."coursesId" = courses.course_id WHERE scheduler_template.scheduler_id =' +
-      ' $1';
+    this.logger.debug('[SCHEDULE TEMPLATE] Get one template information by id');
 
+    const query = `
+      SELECT 
+        st.issynced, 
+        st.is_main_template, 
+        st.lastsynctime,
+        cp.course_position_id,
+        cp.days_in_week,
+        cp.start_period,
+        cp.periods,
+        c.course_id,
+        c.course_name,
+        c.credits,
+        c.course_code,
+        cv.course_value_id,
+        cv.lecture,
+        cv.location
+      FROM scheduler_template st
+      LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
+      LEFT JOIN courses c ON cp."coursesId" = c.course_id
+      LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
+      WHERE st.scheduler_id = $1;
+    `;
     const schedule = await this.datasource.query(query, [id]);
     return schedule;
   }
 
+  async getAllTemplateBySID(sid: string) {
+    this.logger.debug(
+      '[SCHEDULE TEMPLATE] Get all template information of one student by student id',
+    );
+    const existedStudent = await this.userService.findUserWithUID(sid);
+    if (!existedStudent) {
+      throw new BadRequestException(`user with id: ${sid} not found`);
+    }
+
+    const query = `
+      SELECT 
+        st.issynced, 
+        st.is_main_template, 
+        st.lastsynctime,
+        cp.course_position_id,
+        cp.days_in_week,
+        cp.start_period,
+        cp.periods,
+        c.course_id,
+        c.course_name,
+        c.credits,
+        c.course_code,
+        cv.course_value_id,
+        cv.lecture,
+        cv.location
+      FROM scheduler_template st
+      LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
+      LEFT JOIN courses c ON cp."coursesId" = c.course_id
+      LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
+      WHERE st."userId" = $1;
+    `;
+    const schedule = await this.datasource.query(query, [existedStudent.id]);
+    return schedule;
+  }
   async getTemplateBySID(sid: string) {
     return await this.datasource
       .getRepository(SchedulerTemplateEntity)

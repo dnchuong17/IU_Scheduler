@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, Repository } from 'typeorm';
 import { CourseValueEntity } from '../entity/courseValue.entity';
 import { CourseValueDto } from '../dto/courseValue.dto';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { NoteEntity } from '../../note/entity/note.entity';
 
 @Injectable()
 export class CourseValueService {
@@ -28,7 +33,16 @@ export class CourseValueService {
   }
 
   async getCourseValue(id: number) {
-    return await this.courseValueRepository.findOne({ where: { id } });
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: { id },
+    });
+    if (!existingCourseValue) {
+      this.logger.debug(
+        `[COURSE VALUE] fail to find course value with id: ${id}`,
+      );
+      throw new NotFoundException('can not found course value');
+    }
+    return existingCourseValue;
   }
 
   async createCourseValue(
@@ -83,5 +97,82 @@ export class CourseValueService {
       },
     });
     return !!existingValue; // Returns true if a match is found
+  }
+
+  async findCourseValue(courseValueDto: CourseValueDto) {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        courses: { id: courseValueDto.courses.id },
+        scheduler: { id: courseValueDto.scheduler.id },
+        lecture: courseValueDto.lecture,
+        location: courseValueDto.location,
+      },
+    });
+
+    if (!existingCourseValue) {
+      this.logger.debug(
+        `[FIND COURSE VALUE] Course value not found with provided details`,
+      );
+      throw new NotFoundException('Course value not found');
+    }
+
+    this.logger.debug(
+      `[FIND COURSE VALUE] Found course value with ID: ${existingCourseValue.id}`,
+    );
+
+    return existingCourseValue;
+  }
+
+
+  async updateCourseValue(courseValueDto: CourseValueDto) {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        courses: { id: courseValueDto.courses.id },
+        scheduler: { id: courseValueDto.scheduler.id },
+      },
+    });
+
+    if (!existingCourseValue) {
+      throw new NotFoundException('Course value not found');
+    }
+
+    existingCourseValue.lecture = courseValueDto.lecture;
+    existingCourseValue.location = courseValueDto.location;
+
+    this.logger.debug(
+      `[UPDATE COURSE VALUE] update course value with course value's ID: ${existingCourseValue.id} successfully!`,
+    );
+    return await this.courseValueRepository.save(existingCourseValue);
+  }
+
+  async deleteCourseValue(courseValueDto: CourseValueDto): Promise<void> {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        courses: { id: courseValueDto.courses.id },
+        scheduler: { id: courseValueDto.scheduler.id },
+      },
+      relations: ['note'],
+    });
+
+    if (!existingCourseValue) {
+      throw new NotFoundException('Course value not found');
+    }
+
+    // Delete note entity
+    if (existingCourseValue.note) {
+      await this.courseValueRepository.manager.delete(
+        NoteEntity,
+        existingCourseValue.note.id,
+      );
+      this.logger.debug(
+        `[DELETE NOTE] Deleted note with ID: ${existingCourseValue.note.id} successfully!`,
+      );
+    }
+
+    await this.courseValueRepository.delete({ id: existingCourseValue.id });
+
+    this.logger.debug(
+      `[DELETE COURSE VALUE] Deleted course value with ID: ${existingCourseValue.id} successfully!`,
+    );
   }
 }
