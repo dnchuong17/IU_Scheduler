@@ -20,7 +20,9 @@ export class NoteEntity {
   })
   content: string | null;
 
-  @OneToOne(() => CourseValueEntity, (courseValues) => courseValues.note)
+  @OneToOne(() => CourseValueEntity, (courseValues) => courseValues.note, {
+    cascade: true,
+  })
   @JoinColumn({ name: 'course_value_id' })
   courseValues: CourseValueEntity;
 }
