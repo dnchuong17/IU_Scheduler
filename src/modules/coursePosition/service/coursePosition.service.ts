@@ -95,7 +95,7 @@ export class CoursePositionService {
         scheduler: { id: coursePosDto.scheduler.id },
       },
     });
-
+    console.log(existingCoursePosition);
     if (!existingCoursePosition) {
       throw new NotFoundException(
         `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,
@@ -131,7 +131,7 @@ export class CoursePositionService {
     });
 
     this.logger.debug(
-      `[DELETE COURSE POSITION] Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
+      `Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
     );
   }
 }

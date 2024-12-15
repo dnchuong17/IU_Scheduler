@@ -24,9 +24,7 @@ export class CourseValueEntity extends BaseEntity {
   @Column({ name: 'location', nullable: false })
   location: string;
 
-  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => CoursesEntity, (courses) => courses.courseValues)
   courses: CoursesEntity;
 
   @ManyToOne(
@@ -39,8 +37,6 @@ export class CourseValueEntity extends BaseEntity {
   @OneToMany(() => DeadlineEntity, (deadline) => deadline.courseValue)
   deadlines: DeadlineEntity[];
 
-  @OneToOne(() => NoteEntity, (note) => note.courseValues, {
-    onDelete: 'CASCADE',
-  })
+  @OneToOne(() => NoteEntity, (note) => note.courseValues)
   note: NoteEntity;
 }

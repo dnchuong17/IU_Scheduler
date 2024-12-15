@@ -78,8 +78,7 @@ export class CoursesService {
     await this.coursesRepository.delete({ courseCode: courseDto.courseCode });
 
     this.logger.debug(
-      `[DELETE COURSE] Deleted course with course code: ${courseDto.courseCode} successfully!`,
+      `Deleted course with course code: ${courseDto.courseCode} successfully!`,
     );
   }
-
 }
