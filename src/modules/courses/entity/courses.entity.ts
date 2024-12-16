@@ -39,6 +39,8 @@ export class CoursesEntity extends BaseEntity {
   )
   coursePosition: CoursePositionEntity;
 
-  @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses)
+  @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses, {
+    cascade: true,
+  })
   courseValues: CourseValueEntity[];
 }

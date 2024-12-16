@@ -24,6 +24,11 @@ export class SchedulerTemplateController {
     return this.templateService.getTemplate(id);
   }
 
+  @Get('all/:studentId')
+  getAllTemplateBySid(@Param('studentId') studentId: string) {
+    return this.templateService.getAllTemplateBySID(studentId);
+  }
+
   @Post('create')
   createTemplate(@Body() templateDto: SchedulerTemplateDto) {
     try {

@@ -85,4 +85,53 @@ export class CoursePositionService {
     });
     return !!coursePos;
   }
+
+  async updateCoursePos(
+    coursePosDto: CoursePositionDto,
+  ): Promise<CoursePositionEntity> {
+    const existingCoursePosition = await this.coursePositionRepository.findOne({
+      where: {
+        courses: { id: coursePosDto.courses.id },
+        scheduler: { id: coursePosDto.scheduler.id },
+      },
+    });
+
+    if (!existingCoursePosition) {
+      throw new NotFoundException(
+        `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,
+      );
+    }
+
+    existingCoursePosition.days = coursePosDto.days;
+    existingCoursePosition.periods = coursePosDto.periods;
+    existingCoursePosition.startPeriod = coursePosDto.startPeriod;
+
+    this.logger.debug(
+      `[UPDATE COURSE POSITION] update course with course position's ID: ${existingCoursePosition.id} successfully!`,
+    );
+    return await this.coursePositionRepository.save(existingCoursePosition);
+  }
+
+  async deleteCoursePos(coursePosDto: CoursePositionDto): Promise<void> {
+    const existingCoursePosition = await this.coursePositionRepository.findOne({
+      where: {
+        courses: { id: coursePosDto.courses.id },
+        scheduler: { id: coursePosDto.scheduler.id },
+      },
+    });
+
+    if (!existingCoursePosition) {
+      throw new NotFoundException(
+        `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,
+      );
+    }
+
+    await this.coursePositionRepository.delete({
+      id: existingCoursePosition.id,
+    });
+
+    this.logger.debug(
+      `[DELETE COURSE POSITION] Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
+    );
+  }
 }

@@ -21,6 +21,7 @@ import { typeOrmConfigAsync } from './config/typeorm.config';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './modules/user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { NoteModule } from './modules/note/note.module';
 dotenv.config();
 
 @Module({
@@ -42,6 +43,7 @@ dotenv.config();
     DeadlineModule,
     PoolModule,
     SyncModule,
+    NoteModule,
     ValidationModule.register({
       abstractAPIKey: process.env.API_KEY_EMAIL_VALIDATION,
       publicEmailValidateAPI: process.env.API_VALIDATE_EMAIL,
