@@ -8,6 +8,7 @@ import { CoursePositionEntity } from '../entity/coursePosition.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { CoursePositionDto } from '../dto/coursePosition.dto';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import {CoursesService} from "../../courses/service/courses.service";
 
 @Injectable()
 export class CoursePositionService {
@@ -15,7 +16,9 @@ export class CoursePositionService {
     @InjectRepository(CoursePositionEntity)
     private readonly coursePositionRepository: Repository<CoursePositionEntity>,
     private readonly logger: TracingLoggerService,
-  ) {}
+  ) {
+    this.logger.setContext(CoursePositionService.name);
+  }
   async createCoursePos(
     coursePosDto: CoursePositionDto,
     entityManager?: EntityManager,
@@ -130,7 +133,7 @@ export class CoursePositionService {
     });
 
     this.logger.debug(
-      `Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
+      `[DELETE COURSE POSITION]Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
     );
   }
 }

@@ -163,14 +163,14 @@ export class CourseValueService {
         existingCourseValue.note.id,
       );
       this.logger.debug(
-        `Deleted note with ID: ${existingCourseValue.note.id} successfully!`,
+        `[DELETE NOTE]Deleted note with ID: ${existingCourseValue.note.id} successfully!`,
       );
     }
 
     await this.courseValueRepository.delete({ id: existingCourseValue.id });
 
     this.logger.debug(
-      `Deleted course value with ID: ${existingCourseValue.id} successfully!`,
+      `[DELETE COURSE VALUE]Deleted course value with ID: ${existingCourseValue.id} successfully!`,
     );
   }
 }
