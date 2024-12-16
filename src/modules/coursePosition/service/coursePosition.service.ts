@@ -95,7 +95,6 @@ export class CoursePositionService {
         scheduler: { id: coursePosDto.scheduler.id },
       },
     });
-    console.log(existingCoursePosition);
     if (!existingCoursePosition) {
       throw new NotFoundException(
         `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,

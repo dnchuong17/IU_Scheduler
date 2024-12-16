@@ -27,12 +27,17 @@ export class ScheduleTemplateService {
     private readonly coursePositonService: CoursePositionService,
     private readonly coursesService: CoursesService,
     private readonly noteService: NoteService,
-  ) {}
+  ) {
+    this.logger.setContext(ScheduleTemplateService.name);
+  }
 
   async findTemplateWithId(id: number) {
     const template = await this.schedulerTemplateRepo.findOne({
       where: { id: id },
     });
+    this.logger.debug(
+      `[SCHEDULE TEMPLATE] successfully find the template with id: ${id}`,
+    );
     return template;
   }
 
@@ -42,122 +47,146 @@ export class ScheduleTemplateService {
       schedulerTemplateDto.studentId,
     );
 
-    // If the template ID is null, create a new template
+    // If the response template ID is null, create a new template
     if (schedulerTemplateDto.templateId === null) {
       const templateDto = plainToInstance(SchedulerTemplateDto, {
         user: existedStudent,
       });
-      await this.createTemplate(templateDto);
+      const newTemplate = await this.createTemplate(templateDto);
+      // Create new course for new template
+      for (let i = 0; i < schedulerTemplateDto.listOfCourses.length; i++) {
+        const course = schedulerTemplateDto.listOfCourses[i];
+        const {
+          courseID,
+          courseName,
+          date,
+          startPeriod,
+          periodsCount,
+          credits,
+          location,
+          lecturer,
+          isDeleted,
+        } = course;
+
+        const newCourse = await this.coursesService.createCourse({
+          courseCode: courseID,
+          name: courseName,
+          credits: credits,
+          isNew: true,
+        });
+        // Create a new course position
+        await this.coursePositonService.createCoursePos({
+          days: date,
+          periods: periodsCount,
+          startPeriod: startPeriod,
+          scheduler: newTemplate,
+          courses: newCourse,
+        });
+        // Create a new course value
+        await this.courseValueService.createCourseValue({
+          lecture: lecturer,
+          location: location,
+          courses: newCourse,
+          scheduler: newTemplate,
+        });
+      }
+    }
+
+    // If the response template ID is not null
+    const existedTemplate = await this.findTemplateWithId(
+      schedulerTemplateDto.templateId,
+    );
+
+    // If all courses are marked as deleted, delete all
+    const allDeleted = schedulerTemplateDto.listOfCourses.every(
+      (course) => course.isDeleted,
+    );
+    if (allDeleted) {
+      await this.deleteAllCourse(schedulerTemplateDto, existedTemplate);
     } else {
-      const existedTemplate = await this.findTemplateWithId(
-        schedulerTemplateDto.templateId,
-      );
-      if (existedTemplate !== null) {
-        let existedCourse: CoursesEntity | null = null;
+      // Map through listOfCourses and create promises for parallel execution
+      for (let i = 0; i < schedulerTemplateDto.listOfCourses.length; i++) {
+        const course = schedulerTemplateDto.listOfCourses[i];
+        const {
+          courseID,
+          courseName,
+          date,
+          startPeriod,
+          periodsCount,
+          credits,
+          location,
+          lecturer,
+          isDeleted,
+        } = course;
 
-        // Loop through each course in the list
-        for (const course of schedulerTemplateDto.listOfCourses) {
-          const {
-            courseID,
-            courseName,
-            date,
-            startPeriod,
-            periodsCount,
-            credits,
-            location,
-            lecturer,
-            isActive,
-            isDeleted,
-          } = course;
-
-          // Check if the course exists in the database
-          existedCourse =
-            await this.coursesService.findCourseByCourseCode(courseID);
-
-          // If the course doesn't exist, create a new course
-          if (!existedCourse) {
-            const newCourse = await this.coursesService.createCourse({
+        const existedCourse =
+          await this.coursesService.findCourseByCourseCode(courseID);
+        // If we can  not find one course with the reponse course code (course id)
+        if (!existedCourse) {
+          // Create a new course
+          const newCourse = await this.coursesService.createCourse({
+            courseCode: courseID,
+            name: courseName,
+            credits: credits,
+            isNew: true,
+          });
+          // Create a new course position
+          await this.coursePositonService.createCoursePos({
+            days: date,
+            periods: periodsCount,
+            startPeriod: startPeriod,
+            scheduler: existedTemplate,
+            courses: newCourse,
+          });
+          // Create a new course value
+          await this.courseValueService.createCourseValue({
+            lecture: lecturer,
+            location: location,
+            courses: newCourse,
+            scheduler: existedTemplate,
+          });
+        }
+        // If one course can be found by course code
+        if (existedCourse) {
+          // If is deleted is true => deleted
+          if (isDeleted) {
+            await this.deleteCourse(
+              schedulerTemplateDto,
+              existedCourse,
+              existedTemplate,
+            );
+          } else {
+            // update course
+            await this.coursesService.updateCourse({
               courseCode: courseID,
               name: courseName,
               credits: credits,
               isNew: true,
             });
-
-            // Create new course position
-            const newCoursePosition =
-              await this.coursePositonService.createCoursePos({
-                days: date,
-                periods: periodsCount,
-                startPeriod: startPeriod,
-                scheduler: existedTemplate,
-                courses: newCourse,
-              });
-
-            // Create new course value
-            const newCourseValue =
-              await this.courseValueService.createCourseValue({
-                lecture: lecturer,
-                location: location,
-                courses: newCourse,
-                scheduler: existedTemplate,
-              });
-          } else {
-            // If the course already exists, check the isDeleted flag
-            if (isDeleted) {
-              // If isDeleted is true, delete the course
-              await this.deleteCourse(
-                schedulerTemplateDto,
-                existedCourse,
-                existedTemplate,
-              );
-            } else {
-              // Otherwise, update the existing course
-              await this.coursesService.updateCourse({
-                courseCode: courseID,
-                name: courseName,
-                credits: credits,
-                isNew: true,
-              });
-
-              // Update course position
-              await this.coursePositonService.updateCoursePos({
-                days: date,
-                periods: periodsCount,
-                startPeriod: startPeriod,
-                courses: existedCourse,
-                scheduler: existedTemplate,
-              });
-
-              // Update course value
-              await this.courseValueService.updateCourseValue({
-                lecture: lecturer,
-                location: location,
-                courses: existedCourse,
-                scheduler: existedTemplate,
-              });
-            }
+            // update course position
+            await this.coursePositonService.updateCoursePos({
+              days: date,
+              periods: periodsCount,
+              startPeriod: startPeriod,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
+            // update course value
+            await this.courseValueService.updateCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: existedCourse,
+              scheduler: existedTemplate,
+            });
           }
         }
       }
     }
   }
 
+  // Delete all course
   async deleteAllCourse(
     schedulerTemplateDto: SchedulerTemplateDto,
-    existedCourse: CoursesEntity,
-    existedTemplate: SchedulerTemplateEntity,
-  ) {
-    // Delegate logic to deleteCourse as deleteAllCourse is effectively a wrapper
-    await this.deleteCourse(
-      schedulerTemplateDto,
-      existedCourse,
-      existedTemplate,
-    );
-  }
-
-  async deleteCourse(
-    schedulerTemplateDto: SchedulerTemplateDto,
-    existedCourse: CoursesEntity,
     existedTemplate: SchedulerTemplateEntity,
   ) {
     const coursesToDelete = schedulerTemplateDto.listOfCourses.filter(
@@ -166,7 +195,35 @@ export class ScheduleTemplateService {
 
     for (let i = 0; i < coursesToDelete.length; i++) {
       const course = coursesToDelete[i];
+      const existedCourse = await this.coursesService.findCourseByCourseCode(
+        course.courseID,
+      );
+      if (existedCourse) {
+        await this.deleteCourse(
+          schedulerTemplateDto,
+          existedCourse,
+          existedTemplate,
+        );
+      }
+    }
 
+    this.logger.debug(
+      `[DELETE ALL COURSES] Successfully deleted all courses marked as deleted`,
+    );
+  }
+
+  async deleteCourse(
+    schedulerTemplateDto: SchedulerTemplateDto,
+    existedCourse: CoursesEntity,
+    existedTemplate: SchedulerTemplateEntity,
+  ) {
+    const courseToDelete = schedulerTemplateDto.listOfCourses.find(
+      (course) =>
+        course.courseID === existedCourse.courseCode &&
+        course.isDeleted === true,
+    );
+
+    if (courseToDelete) {
       const {
         lecturer,
         location,
@@ -176,37 +233,37 @@ export class ScheduleTemplateService {
         date,
         periodsCount,
         startPeriod,
-      } = course;
-      if (course.isDeleted === true) {
-        // Delete related course positions first
-        await this.coursePositonService.deleteCoursePos({
-          days: date,
-          periods: periodsCount,
-          startPeriod: startPeriod,
-          courses: existedCourse,
-          scheduler: existedTemplate,
-        });
+      } = courseToDelete;
 
-        // Delete related course values next
-        await this.courseValueService.deleteCourseValue({
-          lecture: lecturer,
-          location: location,
-          courses: existedCourse,
-          scheduler: existedTemplate,
-        });
+      await this.coursePositonService.deleteCoursePos({
+        days: date,
+        periods: periodsCount,
+        startPeriod: startPeriod,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
 
-        // Finally, delete the course
-        await this.coursesService.deleteCourse({
-          courseCode: courseID,
-          name: courseName,
-          credits: credits,
-          isNew: true,
-        });
+      await this.courseValueService.deleteCourseValue({
+        lecture: lecturer,
+        location: location,
+        courses: existedCourse,
+        scheduler: existedTemplate,
+      });
 
-        this.logger.debug(
-          `[DELETE COURSE] Successfully deleted course ${courseID} - ${courseName}`,
-        );
-      }
+      await this.coursesService.deleteCourse({
+        courseCode: courseID,
+        name: courseName,
+        credits: credits,
+        isNew: true,
+      });
+
+      this.logger.debug(
+        `[DELETE COURSE] Successfully deleted course ${courseID} - ${courseName}`,
+      );
+    } else {
+      this.logger.debug(
+        `[DELETE COURSE] No course found to delete with ID ${existedCourse.courseCode}`,
+      );
     }
   }
 

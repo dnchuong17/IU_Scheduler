@@ -130,7 +130,6 @@ export class CourseValueService {
         scheduler: { id: courseValueDto.scheduler.id },
       },
     });
-    console.log(existingCourseValue);
     if (!existingCourseValue) {
       throw new NotFoundException('Course value not found');
     }

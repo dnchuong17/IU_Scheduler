@@ -43,9 +43,10 @@ export class CoursesService {
   }
 
   async findCourseByCourseCode(coursesCode: string) {
-    const query = `SELECT * FROM courses WHERE course_code = $1`;
-    const course = await this.dataSource.query(query, [coursesCode]);
-    return course.length > 0 ? course[0] : null;
+    const course = await this.coursesRepository.findOne({
+      where: { courseCode: coursesCode },
+    });
+    return course;
   }
 
   async updateCourse(courseDto: CoursesDto) {
