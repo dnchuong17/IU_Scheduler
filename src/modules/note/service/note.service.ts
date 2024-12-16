@@ -4,9 +4,7 @@ import { NoteEntity } from '../entity/note.entity';
 import { Repository } from 'typeorm';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { NoteDto } from '../dto/note.dto';
-import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
-import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Injectable()
 export class NoteService {
@@ -15,7 +13,9 @@ export class NoteService {
     private readonly noteRepository: Repository<NoteEntity>,
     private readonly logger: TracingLoggerService,
     private readonly courseValueService: CourseValueService,
-  ) {}
+  ) {
+    this.logger.setContext(NoteService.name);
+  }
 
   async getNoteById(id: number) {
     const note = await this.noteRepository.findOne({ where: { id: id } });
@@ -26,13 +26,13 @@ export class NoteService {
     return note;
   }
 
-  async getNoteByCourseValueId(id: number): Promise<NoteEntity> {
+  async getNoteByCourseValueId(courseValueId: number): Promise<NoteEntity> {
     const note = await this.noteRepository.findOne({
-      where: { courseValues: { id } },
+      where: { courseValues: { id: courseValueId } },
     });
     if (!note) {
       this.logger.debug(
-        `[FIND NOTE] fail to find note of course value with id: ${id}`,
+        `[FIND NOTE] fail to find note of course value with id: ${courseValueId}`,
       );
       throw new NotFoundException(
         'fail to find note of course value with id: ${id}',
@@ -43,11 +43,11 @@ export class NoteService {
 
   async createNote(noteDto: NoteDto) {
     const existingCourseValue = await this.courseValueService.getCourseValue(
-      noteDto.courseValue.id,
+      noteDto.courseValueId,
     );
     if (!existingCourseValue) {
       this.logger.debug(
-        `[FIND COURSE VALUE] can not find course value with id: ${noteDto.courseValue.id}`,
+        `[FIND COURSE VALUE] can not find course value with id: ${noteDto.courseValueId}`,
       );
       throw new NotFoundException('Can not find course value');
     }
@@ -56,24 +56,31 @@ export class NoteService {
       courseValues: existingCourseValue,
     });
     this.logger.debug(
-      `[CREATE DEFAULT NOTE] create new default note for course value with id: ${noteDto.courseValue.id}`,
+      `[CREATE DEFAULT NOTE] create new default note for course value with id: ${noteDto.courseValueId}`,
     );
     await this.noteRepository.save(newNote);
-    return newNote;
+    return {
+      message: `Created new note for course value with id: ${noteDto.courseValueId} successfully!`,
+      newNote: newNote,
+    };
   }
 
-  async updateNote(id: number, noteDto: NoteDto) {
-    const existingNote = await this.getNoteByCourseValueId(id);
-
+  async updateNote(noteDto: NoteDto) {
     const existingCourseValue = await this.courseValueService.getCourseValue(
-      noteDto.courseValue.id,
+      noteDto.courseValueId,
     );
-
+    const existingNote = await this.getNoteByCourseValueId(
+      noteDto.courseValueId,
+    );
     existingNote.content = noteDto.content;
     existingNote.courseValues = existingCourseValue;
     await this.noteRepository.save(existingNote);
     this.logger.debug(
       `[UPDATE NOTE] successfully updating note with note id: ${existingNote.id}`,
     );
+    return {
+      message: `Updated note with id: ${existingNote.id} for course value with Id: ${noteDto.courseValueId} successfully`,
+      existingNote: existingNote,
+    };
   }
 }

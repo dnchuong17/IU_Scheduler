@@ -14,7 +14,9 @@ export class UserService {
     private readonly datasource: DataSource,
     private readonly redisHelper: RedisHelper,
     private readonly logger: TracingLoggerService,
-  ) {}
+  ) {
+    this.logger.setContext(UserService.name);
+  }
 
   async findAccountWithEmail(email: string) {
     this.logger.debug(`[FIND USER]-Find user via email ${email}`);
@@ -63,7 +65,6 @@ export class UserService {
   async getUserInfor(id: number) {
     const query = `
     SELECT 
-      u.email, 
       u.name, 
       u.student_id, 
       ARRAY_AGG(st.scheduler_id) AS scheduler_ids
@@ -86,6 +87,4 @@ export class UserService {
 
     return user[0];
   }
-
-
 }

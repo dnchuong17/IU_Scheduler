@@ -7,7 +7,6 @@ export class CreateTemplateItemDto {
   credits: number;
   location: string;
   lecturer: string;
-  note: string;
   isActive: boolean;
   isDeleted: boolean;
 }
