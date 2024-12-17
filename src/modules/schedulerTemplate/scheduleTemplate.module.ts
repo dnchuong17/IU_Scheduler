@@ -9,7 +9,9 @@ import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
 import { UserService } from '../user/service/user.service';
 import { CoursePositionModule } from '../coursePosition/coursePosition.module';
 import { CourseValueModule } from '../courseValue/courseValue.module';
-import {CoursesModule} from "../courses/course.module";
+import { CoursesModule } from '../courses/course.module';
+import { NoteModule } from '../note/note.module';
+import { NoteService } from "../note/service/note.service";
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import {CoursesModule} from "../courses/course.module";
     CoursesModule,
     CourseValueModule,
     forwardRef(() => CoursePositionModule),
+    forwardRef(() => NoteModule),
+    NoteModule,
   ],
   controllers: [SchedulerTemplateController],
   providers: [ScheduleTemplateService, TracingLoggerService, UserService],

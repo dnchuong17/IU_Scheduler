@@ -63,7 +63,6 @@ export class UserService {
   async getUserInfor(id: number) {
     const query = `
     SELECT 
-      u.email, 
       u.name, 
       u.student_id, 
       ARRAY_AGG(st.scheduler_id) AS scheduler_ids
@@ -86,6 +85,4 @@ export class UserService {
 
     return user[0];
   }
-
-
 }
