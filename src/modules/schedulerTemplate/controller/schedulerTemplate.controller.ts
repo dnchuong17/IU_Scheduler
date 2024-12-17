@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { SchedulerTemplateDto } from "../dto/scheduler-Template.dto";
+import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {
@@ -37,6 +37,11 @@ export class SchedulerTemplateController {
     } catch (error) {
       throw new BadRequestException('Cant sync data from schedule');
     }
+  }
+
+  @Get('templateIds/:userId')
+  getAllTemplateIds(@Param('userId') userId: number) {
+    return this.templateService.getAllTemplateIds(userId);
   }
 
   @Post('createSchedule')
