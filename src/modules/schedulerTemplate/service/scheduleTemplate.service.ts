@@ -262,6 +262,15 @@ export class ScheduleTemplateService {
     return schedule;
   }
 
+  async getAllTemplateIds(userId: number) {
+    this.logger.debug('[SCHEDULE TEMPLATE] get all template ids');
+    const query =
+      'SELECT scheduler_template.scheduler_id FROM scheduler_template JOIN student_users ON scheduler_template."userId" = student_users.id WHERE student_users.id = $1';
+    const result = await this.datasource.query(query, [userId]);
+    const templateIds = result.map((id) => id.scheduler_id);
+    return templateIds;
+  }
+
   async getAllTemplateBySID(sid: string) {
     this.logger.debug(
       '[SCHEDULE TEMPLATE] Get all template information of one student by student id',
