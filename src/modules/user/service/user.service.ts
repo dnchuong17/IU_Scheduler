@@ -65,7 +65,6 @@ export class UserService {
     SELECT 
       u.name, 
       u.student_id, 
-      ARRAY_AGG(st.scheduler_id) AS scheduler_ids
     FROM 
       student_users AS u 
     LEFT JOIN 

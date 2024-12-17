@@ -204,7 +204,7 @@ export class SyncDataService {
       .innerJoin(
         'studentUser.scheduler', // Use the 'scheduler' relationship from UserEntity
         'template',
-        'studentUser.id = template.userId', // Assuming 'userId' is the foreign key in 'scheduler_template'
+        'studentUser.id = template."userId"', // Assuming 'userId' is the foreign key in 'scheduler_template'
       )
       .where('template.is_main_template = :value', { value: true })
       .andWhere(
