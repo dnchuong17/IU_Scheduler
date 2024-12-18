@@ -9,7 +9,7 @@ export class SyncRealTimeEntity {
   syncEvent: string;
 
   @Column({ name: 'is_new' })
-  isNew: boolean
+  isNew: boolean;
 
   @Column({ name: 'reference_id' })
   referenceId: string;
