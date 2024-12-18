@@ -66,7 +66,7 @@ export class UserService {
     const query = `
     SELECT 
       u.name, 
-      u.student_id, 
+      u.student_id
     FROM 
       student_users AS u 
     LEFT JOIN 
