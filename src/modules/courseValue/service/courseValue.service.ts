@@ -131,7 +131,7 @@ export class CourseValueService {
       },
     });
     if (!existingCourseValue) {
-      throw new NotFoundException('Course value not found');
+      return await this.createCourseValue(courseValueDto);
     }
 
     existingCourseValue.lecture = courseValueDto.lecture;
@@ -143,11 +143,14 @@ export class CourseValueService {
     return await this.courseValueRepository.save(existingCourseValue);
   }
 
-  async deleteCourseValue(courseValueDto: CourseValueDto): Promise<void> {
+  async deleteCourseValue(
+    courseId: number,
+    schedulerId: number,
+  ): Promise<void> {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {
-        courses: { id: courseValueDto.courses.id },
-        scheduler: { id: courseValueDto.scheduler.id },
+        courses: { id: courseId },
+        scheduler: { id: schedulerId },
       },
       relations: ['note'],
     });

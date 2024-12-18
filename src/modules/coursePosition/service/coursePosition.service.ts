@@ -99,9 +99,7 @@ export class CoursePositionService {
       },
     });
     if (!existingCoursePosition) {
-      throw new NotFoundException(
-        `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,
-      );
+      return await this.createCoursePos(coursePosDto);
     }
 
     existingCoursePosition.days = coursePosDto.days;
@@ -114,17 +112,17 @@ export class CoursePositionService {
     return await this.coursePositionRepository.save(existingCoursePosition);
   }
 
-  async deleteCoursePos(coursePosDto: CoursePositionDto): Promise<void> {
+  async deleteCoursePos(courseId: number, schedulerId: number): Promise<void> {
     const existingCoursePosition = await this.coursePositionRepository.findOne({
       where: {
-        courses: { id: coursePosDto.courses.id },
-        scheduler: { id: coursePosDto.scheduler.id },
+        courses: { id: courseId },
+        scheduler: { id: schedulerId },
       },
     });
 
     if (!existingCoursePosition) {
       throw new NotFoundException(
-        `Course Position with courseId ${coursePosDto.courses.id} and schedulerId ${coursePosDto.scheduler.id} not found`,
+        `Course Position with courseId ${courseId} and schedulerId ${schedulerId} not found`,
       );
     }
 

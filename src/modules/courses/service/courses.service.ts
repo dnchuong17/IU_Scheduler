@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CoursesDto } from '../dto/courses.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -43,6 +47,9 @@ export class CoursesService {
   }
 
   async findCourseByCourseCode(coursesCode: string) {
+    if (coursesCode === null) {
+      throw new BadRequestException('Course Code can not be null');
+    }
     const course = await this.coursesRepository.findOne({
       where: { courseCode: coursesCode },
     });
@@ -65,21 +72,44 @@ export class CoursesService {
     return await this.coursesRepository.save(course);
   }
 
-  async deleteCourse(courseDto: CoursesDto): Promise<void> {
+  async deleteCourse(courseId: number): Promise<void> {
     const course = await this.coursesRepository.findOne({
-      where: { courseCode: courseDto.courseCode },
+      where: { id: courseId },
     });
 
     if (!course) {
-      throw new NotFoundException(
-        `Course with code ${courseDto.courseCode} not found`,
-      );
+      throw new NotFoundException(`Course with code ${courseId} not found`);
     }
 
-    await this.coursesRepository.delete({ courseCode: courseDto.courseCode });
+    await this.coursesRepository.delete({ id: courseId });
 
     this.logger.debug(
-      `[DELETE COURSE] Deleted course with course code: ${courseDto.courseCode} successfully!`,
+      `[DELETE COURSE] Deleted course with course code: ${courseId} successfully!`,
     );
+  }
+
+  public validateCourse(course: any) {
+    const requiredFields = [
+      'courseID',
+      'courseName',
+      'date',
+      'startPeriod',
+      'periodsCount',
+      'credits',
+      'location',
+      'lecturer',
+    ];
+
+    for (const field of requiredFields) {
+      if (
+        course[field] === null ||
+        course[field] === undefined ||
+        (typeof course[field] === 'string' && course[field].trim() === '')
+      ) {
+        throw new Error(
+          `Field ${field} is required and cannot be null or empty.`,
+        );
+      }
+    }
   }
 }
