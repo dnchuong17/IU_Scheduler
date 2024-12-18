@@ -311,8 +311,10 @@ export class ScheduleTemplateService {
     const query =
       'SELECT scheduler_template.scheduler_id FROM scheduler_template JOIN student_users ON scheduler_template."userId" = student_users.id WHERE student_users.id = $1';
     const result = await this.datasource.query(query, [userId]);
-    const templateIds = result.map((id) => id.scheduler_id);
-    return templateIds;
+    const schedulerTemplateIds = result.map((id) => id.scheduler_id);
+    return {
+      scheduler_template_ids: schedulerTemplateIds,
+    };
   }
 
   async getAllTemplateBySID(sid: string) {
