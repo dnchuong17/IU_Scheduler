@@ -11,7 +11,7 @@ const dataSourceOptions: DataSourceOptions = {
   username: process.env.POSTGRES_USER_NAME.toString(),
   password: process.env.POSTGRES_PASSWORD.toString(),
   entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['db/migrations/*{.ts,.js}'],
+  migrations: ['src/migrations/*{.ts,.js}'],
   synchronize: false,
   migrationsRun: true,
 };

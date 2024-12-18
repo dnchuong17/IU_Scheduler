@@ -19,15 +19,23 @@ export class UserService {
   }
 
   async findAccountWithEmail(email: string) {
-    this.logger.debug(`[FIND USER]-Find user via email ${email}`);
-    const cacheUser = await this.redisHelper.get(email);
+    this.logger.debug(
+      `[FIND USER] Direct query from database for email: ${email}`,
+    );
+
+    const cacheKey = `user:${email}`;
+    const cacheUser = await this.redisHelper.get(cacheKey);
+
     if (cacheUser) {
-      this.logger.debug('Found user from cache');
+      this.logger.debug('[FIND USER] Found user from cache');
       return JSON.parse(cacheUser);
     }
+
     const user = await this.userRepository.findOne({ where: { email } });
+
     if (user) {
-      await this.redisHelper.set(user.email, JSON.stringify(user));
+      this.logger.debug('[FIND USER] Saving user to Redis cache');
+      await this.redisHelper.set(cacheKey, JSON.stringify(user));
     }
     return user;
   }
