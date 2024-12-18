@@ -123,7 +123,6 @@ export class CourseValueService {
     return existingCourseValue;
   }
 
-
   async updateCourseValue(courseValueDto: CourseValueDto) {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {
@@ -131,7 +130,6 @@ export class CourseValueService {
         scheduler: { id: courseValueDto.scheduler.id },
       },
     });
-
     if (!existingCourseValue) {
       throw new NotFoundException('Course value not found');
     }
@@ -165,14 +163,14 @@ export class CourseValueService {
         existingCourseValue.note.id,
       );
       this.logger.debug(
-        `[DELETE NOTE] Deleted note with ID: ${existingCourseValue.note.id} successfully!`,
+        `[DELETE NOTE]Deleted note with ID: ${existingCourseValue.note.id} successfully!`,
       );
     }
 
     await this.courseValueRepository.delete({ id: existingCourseValue.id });
 
     this.logger.debug(
-      `[DELETE COURSE VALUE] Deleted course value with ID: ${existingCourseValue.id} successfully!`,
+      `[DELETE COURSE VALUE]Deleted course value with ID: ${existingCourseValue.id} successfully!`,
     );
   }
 }

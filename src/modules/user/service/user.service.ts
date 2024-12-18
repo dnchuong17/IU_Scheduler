@@ -14,7 +14,9 @@ export class UserService {
     private readonly datasource: DataSource,
     private readonly redisHelper: RedisHelper,
     private readonly logger: TracingLoggerService,
-  ) {}
+  ) {
+    this.logger.setContext(UserService.name);
+  }
 
   async findAccountWithEmail(email: string) {
     this.logger.debug(`[FIND USER]-Find user via email ${email}`);
