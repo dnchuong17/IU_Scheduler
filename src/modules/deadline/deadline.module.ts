@@ -5,10 +5,11 @@ import { DeadlineService } from './service/deadline.service';
 import { DeadlineController } from './controller/deadline.controller';
 import { CourseValueService } from '../courseValue/service/courseValue.service';
 import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
+import { TracingLoggerService } from "../../logger/tracing-logger.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([DeadlineEntity, CourseValueEntity])],
   controllers: [DeadlineController],
-  providers: [DeadlineService, CourseValueService],
+  providers: [DeadlineService, CourseValueService, TracingLoggerService],
 })
 export class DeadlineModule {}
