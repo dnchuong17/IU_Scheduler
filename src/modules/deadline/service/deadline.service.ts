@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
+import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 
 @Injectable()
 export class DeadlineService {
@@ -12,7 +17,10 @@ export class DeadlineService {
     private readonly deadlineRepository: Repository<DeadlineEntity>,
     private readonly dataSource: DataSource,
     private readonly courseValueService: CourseValueService,
-  ) {}
+    private readonly logger: TracingLoggerService,
+  ) {
+    this.logger.setContext(DeadlineService.name);
+  }
 
   async createDeadline(deadlineDto: DeadlineDto) {
     const existCourseValue = await this.courseValueService.getCourseValue(
@@ -65,5 +73,31 @@ export class DeadlineService {
     } catch (error) {
       throw new BadRequestException(error);
     }
+  }
+
+  async getDeadlineByCoursealueId(courseValueId: number) {
+    const deadlines = await this.deadlineRepository.query(
+      `
+    SELECT d.*
+    FROM deadline d
+    INNER JOIN course_value cv ON d."courseValueId" = cv.course_value_id
+    WHERE cv.course_value_id = $1 AND d."is_Active" = true
+    `,
+      [courseValueId],
+    );
+
+    if (deadlines.length === 0) {
+      this.logger.debug('[FIND DEADLINE] fail to find active deadlines');
+      throw new NotFoundException('No active deadlines found');
+    }
+
+    this.logger.debug(
+      `[FIND DEADLINE] found ${deadlines.length} active deadlines for course value id: ${courseValueId}`,
+    );
+
+    return {
+      message: `Found ${deadlines.length} active deadlines successfully`,
+      deadlines,
+    };
   }
 }

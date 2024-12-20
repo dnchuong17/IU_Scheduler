@@ -20,4 +20,9 @@ export class DeadlineController {
   activeAlert(@Body() deadlineDto: DeadlineDto, @Param('id') id: number) {
     return this.deadlineService.activeAlert(deadlineDto, id);
   }
+
+  @Get('by-course-value/:courseValueId')
+  getDeadlineByCoursealueId(@Param('courseValueId') courseValueId: number) {
+    return this.deadlineService.getDeadlineByCoursealueId(courseValueId);
+  }
 }
