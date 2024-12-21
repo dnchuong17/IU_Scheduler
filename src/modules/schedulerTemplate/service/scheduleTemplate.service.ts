@@ -115,6 +115,10 @@ export class ScheduleTemplateService {
           });
         }
       }
+      return {
+        message: `create new template successfully with templateId: ${newTemplate.id}`,
+        newTemplateId: newTemplate.id,
+      };
     }
     // If the response template ID is not null
     else {
