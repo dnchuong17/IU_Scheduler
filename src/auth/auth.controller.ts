@@ -11,6 +11,7 @@ import { UserDto } from '../modules/user/dto/user.dto';
 import { RefreshJwtAuthGuard } from './guard/refresh-jwt-auth.guard';
 import { TracingLoggerService } from '../logger/tracing-logger.service';
 import { SigninDto } from '../modules/user/dto/signin.dto';
+import { LocalAuthGuard } from "./guard/local-auth.guard";
 
 @Controller('auth')
 export class AuthController {

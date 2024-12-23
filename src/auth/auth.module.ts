@@ -25,8 +25,8 @@ import { UserEntity } from '../modules/user/entity/user.entity';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
-import { CoursePositionService } from "../modules/coursePosition/service/coursePosition.service";
-import { CoursePositionEntity } from "../modules/coursePosition/entity/coursePosition.entity";
+import { CoursePositionService } from '../modules/coursePosition/service/coursePosition.service';
+import { CoursePositionEntity } from '../modules/coursePosition/entity/coursePosition.entity';
 
 @Module({
   imports: [
