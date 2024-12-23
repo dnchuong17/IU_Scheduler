@@ -5,10 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CoursePositionEntity } from '../entity/coursePosition.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Like, Repository } from 'typeorm';
 import { CoursePositionDto } from '../dto/coursePosition.dto';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import {CoursesService} from "../../courses/service/courses.service";
+import { CoursesService } from '../../courses/service/courses.service';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
+import { CourseValueService } from '../../courseValue/service/courseValue.service';
 
 @Injectable()
 export class CoursePositionService {
@@ -66,6 +69,72 @@ export class CoursePositionService {
     }
   }
 
+  async existedLabCoursePos(
+    course: CoursesEntity,
+    scheduler: SchedulerTemplateEntity,
+  ) {
+    const existingCoursePos = await this.coursePositionRepository.findOne({
+      where: {
+        isLab: true,
+        courses: { id: course.id },
+        scheduler: { id: scheduler.id },
+      },
+    });
+
+    if (!existingCoursePos) {
+      this.logger.debug(
+        `[FIND COURSE POSITION] Course value not found with provided details`,
+      );
+      return null;
+    }
+
+    this.logger.debug(
+      `[FIND COURSE POSITION] Found course value with ID: ${existingCoursePos.id}`,
+    );
+
+    return existingCoursePos;
+  }
+
+  async createLabCoursePos(coursePositionDto: CoursePositionDto) {
+    const newLabCoursePos = await this.coursePositionRepository.create({
+      days: coursePositionDto.days,
+      periods: coursePositionDto.periods,
+      startPeriod: coursePositionDto.startPeriod,
+      scheduler: coursePositionDto.scheduler,
+      isLab: true,
+      courses: coursePositionDto.courses,
+    });
+
+    const savedCoursePos =
+      await this.coursePositionRepository.save(newLabCoursePos);
+
+    this.logger.debug(
+      `[CREATE LAB COURSE POSITION] Created new lab course position successfully:`,
+    );
+
+    return savedCoursePos;
+  }
+
+  async updateLabCoursePos(
+    coursePosDto: CoursePositionDto,
+  ): Promise<CoursePositionEntity> {
+    const existingCoursePosition = await this.existedLabCoursePos(
+      coursePosDto.courses,
+      coursePosDto.scheduler,
+    );
+    if (!existingCoursePosition) {
+      return await this.createCoursePos(coursePosDto);
+    }
+    existingCoursePosition.days = coursePosDto.days;
+    existingCoursePosition.periods = coursePosDto.periods;
+    existingCoursePosition.startPeriod = coursePosDto.startPeriod;
+
+    this.logger.debug(
+      `[UPDATE COURSE POSITION] update course position with course position's ID: ${existingCoursePosition.id} successfully!`,
+    );
+    return await this.coursePositionRepository.save(existingCoursePosition);
+  }
+
   async deleteCoursePosByCourseId(courseId: number): Promise<void> {
     const deletedCourse = await this.coursePositionRepository.findOne({
       where: { id: courseId },
@@ -88,7 +157,30 @@ export class CoursePositionService {
     });
     return !!coursePos;
   }
+  async findCoursePos(
+    course: CoursesEntity,
+    scheduler: SchedulerTemplateEntity,
+  ) {
+    const existingCoursePos = await this.coursePositionRepository.findOne({
+      where: {
+        courses: { id: course.id },
+        scheduler: { id: scheduler.id },
+      },
+    });
 
+    if (!existingCoursePos) {
+      this.logger.debug(
+        `[FIND COURSE POSITION] Course position not found with provided details`,
+      );
+      return null;
+    }
+
+    this.logger.debug(
+      `[FIND COURSE POSITION] Found course position with ID: ${existingCoursePos.id}`,
+    );
+
+    return existingCoursePos;
+  }
   async updateCoursePos(
     coursePosDto: CoursePositionDto,
   ): Promise<CoursePositionEntity> {
@@ -107,7 +199,7 @@ export class CoursePositionService {
     existingCoursePosition.startPeriod = coursePosDto.startPeriod;
 
     this.logger.debug(
-      `[UPDATE COURSE POSITION] update course with course position's ID: ${existingCoursePosition.id} successfully!`,
+      `[UPDATE COURSE POSITION] update course position with course position's ID: ${existingCoursePosition.id} successfully!`,
     );
     return await this.coursePositionRepository.save(existingCoursePosition);
   }

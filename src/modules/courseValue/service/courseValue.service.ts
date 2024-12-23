@@ -4,11 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Like, Repository } from 'typeorm';
 import { CourseValueEntity } from '../entity/courseValue.entity';
 import { CourseValueDto } from '../dto/courseValue.dto';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { NoteEntity } from '../../note/entity/note.entity';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
+import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 @Injectable()
 export class CourseValueService {
@@ -87,6 +89,21 @@ export class CourseValueService {
     }
   }
 
+  async createLabCourseValue(courseValueDto: CourseValueDto) {
+    const newCourseValue = await this.courseValueRepository.create({
+      lecture: courseValueDto.lecture,
+      location: courseValueDto.location,
+      courses: courseValueDto.courses,
+      scheduler: courseValueDto.scheduler,
+    });
+    const savedCourseValue =
+      await this.courseValueRepository.save(newCourseValue);
+
+    this.logger.debug(`[CREATE COURSE VALUE] Created successfully`);
+
+    return savedCourseValue;
+  }
+
   async existsCourseValue(courseValueDto: CourseValueDto) {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
@@ -99,13 +116,15 @@ export class CourseValueService {
     return !!existingValue; // Returns true if a match is found
   }
 
-  async findCourseValue(courseValueDto: CourseValueDto) {
+  async existedLabCourseValue(
+    course: CoursesEntity,
+    scheduler: SchedulerTemplateEntity,
+  ) {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {
-        courses: { id: courseValueDto.courses.id },
-        scheduler: { id: courseValueDto.scheduler.id },
-        lecture: courseValueDto.lecture,
-        location: courseValueDto.location,
+        location: Like('LA%'),
+        courses: { id: course.id },
+        scheduler: { id: scheduler.id },
       },
     });
 
@@ -113,7 +132,7 @@ export class CourseValueService {
       this.logger.debug(
         `[FIND COURSE VALUE] Course value not found with provided details`,
       );
-      throw new NotFoundException('Course value not found');
+      return null;
     }
 
     this.logger.debug(
@@ -126,6 +145,27 @@ export class CourseValueService {
   async updateCourseValue(courseValueDto: CourseValueDto) {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {
+        courses: courseValueDto.courses,
+        scheduler: courseValueDto.scheduler,
+      },
+    });
+    if (!existingCourseValue) {
+      return await this.createCourseValue(courseValueDto);
+    }
+
+    existingCourseValue.lecture = courseValueDto.lecture;
+    existingCourseValue.location = courseValueDto.location;
+
+    this.logger.debug(
+      `[UPDATE COURSE VALUE] update course value with course value's ID: ${existingCourseValue.id} successfully!`,
+    );
+    return await this.courseValueRepository.save(existingCourseValue);
+  }
+
+  async updateLabCourseValue(courseValueDto: CourseValueDto) {
+    const existingCourseValue = await this.courseValueRepository.findOne({
+      where: {
+        location: Like('LA%'),
         courses: { id: courseValueDto.courses.id },
         scheduler: { id: courseValueDto.scheduler.id },
       },

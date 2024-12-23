@@ -26,13 +26,15 @@ export class CoursePositionEntity extends BaseEntity {
   @Column({ name: 'periods', nullable: false })
   periods: number;
 
+  @Column({ name: 'isLab', nullable: true })
+  isLab: boolean;
+
   @ManyToOne(
     () => SchedulerTemplateEntity,
     (scheduler) => scheduler.coursePositions,
   )
   scheduler: SchedulerTemplateEntity;
 
-  @OneToOne(() => CoursesEntity, (course) => course.coursePosition)
-  @JoinColumn({ name: 'coursesId' })
+  @ManyToOne(() => CoursesEntity, (course) => course.coursePosition)
   courses: CoursesEntity;
 }
