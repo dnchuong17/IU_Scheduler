@@ -63,7 +63,7 @@ import { NoteModule } from "../note/note.module";
     ...syncPoolConfig,
     CoursePositionService,
   ],
-  exports: [SYNC_DATA_SERVICE],
+  exports: [SYNC_DATA_SERVICE, ...syncPoolConfig],
 })
 export class SyncModule implements OnModuleInit {
   constructor(

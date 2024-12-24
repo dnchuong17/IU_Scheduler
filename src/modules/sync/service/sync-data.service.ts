@@ -39,7 +39,6 @@ import { Queue } from 'bullmq';
 import { SyncRealTimeEntity } from '../entities/sync-real-time.entity';
 import { SyncRealtimeRequestDto } from '../dto/sync-realtime-request.dto';
 import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
-import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
 
@@ -404,6 +403,7 @@ export class SyncDataService {
     const query =
       'SELECT reference_id FROM sync_realtime WHERE is_new = true AND sync_event = $1';
     const UID = await this.dataSource.query(query, [SYNC_EVENT_FROM_SCHEDULE]);
+    this.logger.debug(`Total sync realtime event: ${UID.length}`);
     for (const { reference_id } of UID) {
       console.log(reference_id);
       await this.syncDataFromSchedule(reference_id);
