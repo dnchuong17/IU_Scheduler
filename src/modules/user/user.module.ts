@@ -8,13 +8,9 @@ import { UserEntity } from './entity/user.entity';
 import { UserService } from './service/user.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ UserEntity,
-      UserSettingInfo,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([UserEntity, UserSettingInfo])],
   controllers: [UserController],
   providers: [UserService, RedisHelper, TracingLoggerService, TypeOrmModule],
-  exports: [UserService, TypeOrmModule],
+  exports: [UserService],
 })
 export class UserModule {}
