@@ -26,48 +26,40 @@ export class CoursePositionService {
     coursePosDto: CoursePositionDto,
     entityManager?: EntityManager,
   ) {
-    try {
-      // Chọn EntityManager từ transaction nếu có
-      const manager = entityManager || this.coursePositionRepository.manager;
+    const manager = entityManager || this.coursePositionRepository.manager;
 
-      // Xác thực dữ liệu đầu vào
-      if (
-        !coursePosDto.days ||
-        !coursePosDto.periods ||
-        !coursePosDto.startPeriod ||
-        !coursePosDto.scheduler ||
-        !coursePosDto.courses
-      ) {
-        throw new BadRequestException(
-          'Missing required fields for CoursePosition',
-        );
-      }
-
-      // Tạo thực thể mới
-      const newPos = manager.create(CoursePositionEntity, {
-        days: coursePosDto.days,
-        periods: coursePosDto.periods,
-        startPeriod: coursePosDto.startPeriod,
-        scheduler: coursePosDto.scheduler,
-        courses: coursePosDto.courses,
-      });
-
-      const savedCoursePos = await manager.save(newPos);
-
-      this.logger.debug(
-        `[CREATE COURSE POSITION] Created successfully: ${JSON.stringify(
-          savedCoursePos,
-        )}`,
+    if (
+      !coursePosDto.days ||
+      !coursePosDto.periods ||
+      !coursePosDto.startPeriod ||
+      !coursePosDto.scheduler ||
+      !coursePosDto.courses
+    ) {
+      throw new BadRequestException(
+        'Missing required fields for CoursePosition',
       );
-
-      return savedCoursePos;
-    } catch (error) {
-      this.logger.error(
-        `[CREATE COURSE POSITION] Failed to create CoursePosition: ${error.message}`,
-      );
-      throw error;
     }
+
+    const newPos = manager.create(CoursePositionEntity, {
+      days: coursePosDto.days,
+      periods: coursePosDto.periods,
+      startPeriod: coursePosDto.startPeriod,
+      scheduler: coursePosDto.scheduler,
+      courses: coursePosDto.courses,
+      isLab: coursePosDto.isLab || false,
+    });
+
+    const savedCoursePos = await manager.save(newPos);
+
+    this.logger.debug(
+      `[CREATE COURSE POSITION] Created successfully: ${JSON.stringify(
+        savedCoursePos,
+      )}`,
+    );
+
+    return savedCoursePos;
   }
+
 
   async existedLabCoursePos(
     course: CoursesEntity,

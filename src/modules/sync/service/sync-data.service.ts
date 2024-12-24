@@ -324,6 +324,7 @@ export class SyncDataService {
               periods: parseInt(params[7], 10) || null,
               scheduler: template,
               courses: course,
+              isLab: params[5].startsWith('LA'), // Set isLab if location starts with "LA"
             });
 
             const courseValueDto = plainToInstance(CourseValueDto, {
