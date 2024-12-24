@@ -110,8 +110,3 @@
     "testEnvironment": "node"
   }
 }
-{
-  "overrides": {
-    "cron": "3.2.1"
-  }
-}
