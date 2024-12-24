@@ -59,82 +59,6 @@ export class CoursePositionService {
     return savedCoursePos;
   }
 
-  async existedLabCoursePos(
-    course: CoursesEntity,
-    scheduler: SchedulerTemplateEntity,
-  ) {
-    const existingCoursePos = await this.coursePositionRepository.findOne({
-      where: {
-        isLab: true,
-        courses: { id: course.id },
-        scheduler: { id: scheduler.id },
-      },
-    });
-
-    if (!existingCoursePos) {
-      this.logger.debug(
-        `[FIND COURSE POSITION] Course value not found with provided details`,
-      );
-      return null;
-    }
-
-    this.logger.debug(
-      `[FIND COURSE POSITION] Found course value with ID: ${existingCoursePos.id}`,
-    );
-
-    return existingCoursePos;
-  }
-
-  async createLabCoursePos(coursePositionDto: CoursePositionDto) {
-    const newLabCoursePos = await this.coursePositionRepository.create({
-      days: coursePositionDto.days,
-      periods: coursePositionDto.periods,
-      startPeriod: coursePositionDto.startPeriod,
-      scheduler: coursePositionDto.scheduler,
-      isLab: true,
-      courses: coursePositionDto.courses,
-    });
-
-    const savedCoursePos =
-      await this.coursePositionRepository.save(newLabCoursePos);
-
-    this.logger.debug(
-      `[CREATE LAB COURSE POSITION] Created new lab course position successfully:`,
-    );
-
-    return savedCoursePos;
-  }
-
-  async updateLabCoursePos(
-    coursePosDto: CoursePositionDto,
-  ): Promise<CoursePositionEntity> {
-    const existingCoursePosition = await this.existedLabCoursePos(
-      coursePosDto.courses,
-      coursePosDto.scheduler,
-    );
-    if (!existingCoursePosition) {
-      return await this.createCoursePos(coursePosDto);
-    }
-    existingCoursePosition.days = coursePosDto.days;
-    existingCoursePosition.periods = coursePosDto.periods;
-    existingCoursePosition.startPeriod = coursePosDto.startPeriod;
-
-    this.logger.debug(
-      `[UPDATE COURSE POSITION] update course position with course position's ID: ${existingCoursePosition.id} successfully!`,
-    );
-    return await this.coursePositionRepository.save(existingCoursePosition);
-  }
-
-  async deleteCoursePosByCourseId(courseId: number): Promise<void> {
-    const deletedCourse = await this.coursePositionRepository.findOne({
-      where: { id: courseId },
-    });
-    if (!deletedCourse) {
-      throw new NotFoundException('Course is not found');
-    }
-    await this.coursePositionRepository.delete({ id: courseId });
-  }
-
   async existsCoursePosition(coursePosDto: CoursePositionDto) {
     const coursePos = await this.coursePositionRepository.findOne({
       where: {
@@ -147,39 +71,27 @@ export class CoursePositionService {
     });
     return !!coursePos;
   }
-  async findCoursePos(
-    course: CoursesEntity,
-    scheduler: SchedulerTemplateEntity,
-  ) {
-    const existingCoursePos = await this.coursePositionRepository.findOne({
-      where: {
-        courses: { id: course.id },
-        scheduler: { id: scheduler.id },
-      },
-    });
 
-    if (!existingCoursePos) {
-      this.logger.debug(
-        `[FIND COURSE POSITION] Course position not found with provided details`,
-      );
-      return null;
-    }
-
-    this.logger.debug(
-      `[FIND COURSE POSITION] Found course position with ID: ${existingCoursePos.id}`,
-    );
-
-    return existingCoursePos;
-  }
   async updateCoursePos(
     coursePosDto: CoursePositionDto,
   ): Promise<CoursePositionEntity> {
-    const existingCoursePosition = await this.coursePositionRepository.findOne({
-      where: {
-        courses: { id: coursePosDto.courses.id },
-        scheduler: { id: coursePosDto.scheduler.id },
-      },
-    });
+    let existingCoursePosition;
+    if (coursePosDto.isLab === false) {
+      existingCoursePosition = await this.coursePositionRepository.findOne({
+        where: {
+          courses: { id: coursePosDto.courses.id },
+          scheduler: { id: coursePosDto.scheduler.id },
+        },
+      });
+    } else {
+      existingCoursePosition = await this.coursePositionRepository.findOne({
+        where: {
+          isLab: true,
+          courses: { id: coursePosDto.courses.id },
+          scheduler: { id: coursePosDto.scheduler.id },
+        },
+      });
+    }
     if (!existingCoursePosition) {
       return await this.createCoursePos(coursePosDto);
     }

@@ -30,7 +30,7 @@ export class DeadlineController {
   }
 
   @Get('by-course-value/:courseValueId')
-  getDeadlineByCoursealueId(@Param('courseValueId') courseValueId: number) {
+  getDeadlineByCourseValueId(@Param('courseValueId') courseValueId: number) {
     return this.deadlineService.getDeadlineByCourseValueId(courseValueId);
   }
 

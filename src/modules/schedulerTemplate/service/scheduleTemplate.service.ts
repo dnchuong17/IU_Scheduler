@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SchedulerTemplateEntity } from '../entity/schedulerTemplate.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Like, Repository } from 'typeorm';
 import { UserEntity } from '../../user/entity/user.entity';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { plainToInstance } from 'class-transformer';
@@ -14,6 +14,8 @@ import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { NoteService } from '../../note/service/note.service';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { LAB_LOCATION_PREFIX } from '../../courseValue/dto/courseValue.constant';
+import { startWith } from 'rxjs';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -97,50 +99,52 @@ export class ScheduleTemplateService {
             courses: newCourse,
             scheduler: newTemplate,
           });
-        }
-        // If one course can be found by course code
-        else {
-          // If this course have lab
+        } else {
           if (isLab === true) {
-            // If the course is a lab, check if the lab course value exists
+            // Checking lab course value
             const existingLabCourseVal =
-              await this.courseValueService.existedLabCourseValue(
-                existedCourse,
-                newTemplate,
-              );
-            // If we can not find the course value of one lab
-            if (existingLabCourseVal === null) {
-              await this.courseValueService.createLabCourseValue({
+              await this.courseValueService.existsCourseValue({
+                lecture: lecturer,
+                location: Like(LAB_LOCATION_PREFIX) as unknown as string,
+                courses: existedCourse,
+                scheduler: newTemplate,
+              });
+            if (existingLabCourseVal === false) {
+              await this.courseValueService.createCourseValue({
                 lecture: lecturer,
                 location: location,
                 courses: existedCourse,
                 scheduler: newTemplate,
               });
             } else {
-              await this.courseValueService.updateLabCourseValue({
+              await this.courseValueService.updateCourseValue({
                 lecture: lecturer,
                 location: location,
                 courses: existedCourse,
                 scheduler: newTemplate,
               });
             }
+            // Checking lab course position
             const existingLabCoursePos =
-              await this.coursePositonService.existedLabCoursePos(
-                existedCourse,
-                newTemplate,
-              );
-            // If we can not find the course position of one lab
-            if (existingLabCoursePos === null) {
-              await this.coursePositonService.createLabCoursePos({
+              await this.coursePositonService.existsCoursePosition({
+                isLab: isLab,
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
                 scheduler: newTemplate,
-                isLab: null,
+                courses: existedCourse,
+              });
+            if (existingLabCoursePos === false) {
+              await this.coursePositonService.createCoursePos({
+                isLab: isLab,
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: newTemplate,
                 courses: existedCourse,
               });
             } else {
-              await this.coursePositonService.updateLabCoursePos({
+              await this.coursePositonService.updateCoursePos({
                 isLab: isLab,
                 days: date,
                 periods: periodsCount,
@@ -150,22 +154,19 @@ export class ScheduleTemplateService {
               });
             }
           } else {
-            // If the course is not a lab (theory course), update course value
             await this.courseValueService.updateCourseValue({
               lecture: lecturer,
               location: location,
               courses: existedCourse,
               scheduler: newTemplate,
             });
-
-            // Update course position (if required)
             await this.coursePositonService.updateCoursePos({
               isLab: isLab,
               days: date,
               periods: periodsCount,
               startPeriod: startPeriod,
-              courses: existedCourse,
               scheduler: newTemplate,
+              courses: existedCourse,
             });
           }
         }
@@ -237,49 +238,52 @@ export class ScheduleTemplateService {
             });
           }
           // If one course can be found by course code
-          else if (existedCourse) {
-            if (isDeleted) {
-              await this.deleteCourse(existedCourse.id, existedTemplate.id);
-            } else if (isLab === true) {
-              // If the course is a lab, check if the lab course value exists
+          else {
+            if (isLab === true) {
+              // Checking lab course value
               const existingLabCourseVal =
-                await this.courseValueService.existedLabCourseValue(
-                  existedCourse,
-                  existedTemplate,
-                );
-              // If we can not find the course value of one lab
-              if (existingLabCourseVal === null) {
-                await this.courseValueService.createLabCourseValue({
+                await this.courseValueService.existsCourseValue({
+                  lecture: lecturer,
+                  location: Like(LAB_LOCATION_PREFIX) as unknown as string,
+                  courses: existedCourse,
+                  scheduler: existedTemplate,
+                });
+              if (existingLabCourseVal === false) {
+                await this.courseValueService.createCourseValue({
                   lecture: lecturer,
                   location: location,
                   courses: existedCourse,
                   scheduler: existedTemplate,
                 });
               } else {
-                await this.courseValueService.updateLabCourseValue({
+                await this.courseValueService.updateCourseValue({
                   lecture: lecturer,
                   location: location,
                   courses: existedCourse,
                   scheduler: existedTemplate,
                 });
               }
+              // Checking lab course position
               const existingLabCoursePos =
-                await this.coursePositonService.existedLabCoursePos(
-                  existedCourse,
-                  existedTemplate,
-                );
-              // If we can not find the course position of one lab
-              if (existingLabCoursePos === null) {
-                await this.coursePositonService.createLabCoursePos({
+                await this.coursePositonService.existsCoursePosition({
+                  isLab: isLab,
                   days: date,
                   periods: periodsCount,
                   startPeriod: startPeriod,
                   scheduler: existedTemplate,
-                  isLab: null,
+                  courses: existedCourse,
+                });
+              if (existingLabCoursePos === false) {
+                await this.coursePositonService.createCoursePos({
+                  isLab: isLab,
+                  days: date,
+                  periods: periodsCount,
+                  startPeriod: startPeriod,
+                  scheduler: existedTemplate,
                   courses: existedCourse,
                 });
               } else {
-                await this.coursePositonService.updateLabCoursePos({
+                await this.coursePositonService.updateCoursePos({
                   isLab: isLab,
                   days: date,
                   periods: periodsCount,
@@ -289,22 +293,19 @@ export class ScheduleTemplateService {
                 });
               }
             } else {
-              // If the course is not a lab (theory course), update course value
               await this.courseValueService.updateCourseValue({
                 lecture: lecturer,
                 location: location,
                 courses: existedCourse,
                 scheduler: existedTemplate,
               });
-
-              // Update course position (if required)
               await this.coursePositonService.updateCoursePos({
                 isLab: isLab,
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
-                courses: existedCourse,
                 scheduler: existedTemplate,
+                courses: existedCourse,
               });
             }
           }
