@@ -305,6 +305,10 @@ export class ScheduleTemplateService {
           }
         }
       }
+      return {
+        message: `update template with template id: ${existedTemplate.id} successfully`,
+        templateId: existedTemplate.id,
+      };
     }
   }
   // Delete all course
@@ -420,28 +424,6 @@ export class ScheduleTemplateService {
   }
 
 
-
-
-  //  SELECT
-  //         st.issynced,
-  //         st.is_main_template,
-  //         st.lastsynctime,
-  //         cp.course_position_id,
-  //         cp.days_in_week,
-  //         cp.start_period,
-  //         cp.periods,
-  //         c.course_id,
-  //         c.course_name,
-  //         c.credits,
-  //         c.course_code,
-  //         cv.course_value_id,
-  //         cv.lecture,
-  //         cv.location
-  //       FROM scheduler_template st
-  //       LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
-  //       LEFT JOIN courses c ON cp."coursesId" = c.course_id
-  //       LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
-  //       WHERE st.scheduler_id = $1;
   async getAllTemplateIds(userId: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] get all template ids');
     const query =
