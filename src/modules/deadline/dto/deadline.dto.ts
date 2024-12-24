@@ -23,7 +23,7 @@ export class DeadlineDto {
   @IsDate()
   date: Date;
 
-  courseValue: CourseValueEntity;
+  courseValueId: number;
 
-  user: UserEntity;
+  userId: number;
 }

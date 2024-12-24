@@ -9,7 +9,9 @@ import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { UserService } from "../../user/service/user.service";
+import { UserService } from '../../user/service/user.service';
+import { UserEntity } from '../../user/entity/user.entity';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 @Injectable()
 export class DeadlineService {
@@ -19,26 +21,37 @@ export class DeadlineService {
     private readonly dataSource: DataSource,
     private readonly courseValueService: CourseValueService,
     private readonly logger: TracingLoggerService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {
     this.logger.setContext(DeadlineService.name);
   }
 
   async createDeadline(deadlineDto: DeadlineDto) {
-    await this.deadlineRepository
-      .createQueryBuilder()
-      .insert()
-      .into(DeadlineEntity)
-      .values({
+    await this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(UserEntity, {
+        where: { id: deadlineDto.userId },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const courseValue = await manager.findOne(CourseValueEntity, {
+        where: { id: deadlineDto.courseValueId },
+      });
+      if (!courseValue) {
+        throw new Error('Course value not found');
+      }
+
+      await manager.insert(DeadlineEntity, {
         isActive: deadlineDto.isActive ?? false,
         deadlineType: deadlineDto.deadlineType,
         priority: deadlineDto.priority || null,
         description: deadlineDto.description,
         deadline: new Date(deadlineDto.date),
-        courseValue: deadlineDto.courseValue,
-        user: deadlineDto.user,
-      })
-      .execute();
+        courseValue,
+        user,
+      });
+    });
 
     return {
       message: 'Deadline created successfully',
