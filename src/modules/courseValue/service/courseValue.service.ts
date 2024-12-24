@@ -90,21 +90,6 @@ export class CourseValueService {
     }
   }
 
-  async createLabCourseValue(courseValueDto: CourseValueDto) {
-    const newCourseValue = await this.courseValueRepository.create({
-      lecture: courseValueDto.lecture,
-      location: courseValueDto.location,
-      courses: courseValueDto.courses,
-      scheduler: courseValueDto.scheduler,
-    });
-    const savedCourseValue =
-      await this.courseValueRepository.save(newCourseValue);
-
-    this.logger.debug(`[CREATE COURSE VALUE] Created successfully`);
-
-    return savedCourseValue;
-  }
-
   async existsCourseValue(courseValueDto: CourseValueDto) {
     const existingValue = await this.courseValueRepository.findOne({
       where: {
@@ -117,60 +102,24 @@ export class CourseValueService {
     return !!existingValue; // Returns true if a match is found
   }
 
-  async existedLabCourseValue(
-    course: CoursesEntity,
-    scheduler: SchedulerTemplateEntity,
-  ) {
-    const existingCourseValue = await this.courseValueRepository.findOne({
-      where: {
-        location: Like(LAB_LOCATION_PREFIX),
-        courses: { id: course.id },
-        scheduler: { id: scheduler.id },
-      },
-    });
-
-    if (!existingCourseValue) {
-      this.logger.debug(
-        `[FIND LAB COURSE VALUE] Course value not found with provided details`,
-      );
-      return null;
-    }
-
-    this.logger.debug(
-      `[FIND LAB COURSE VALUE] Found course value with ID: ${existingCourseValue.id}`,
-    );
-
-    return existingCourseValue;
-  }
-
   async updateCourseValue(courseValueDto: CourseValueDto) {
-    const existingCourseValue = await this.courseValueRepository.findOne({
-      where: {
-        courses: courseValueDto.courses,
-        scheduler: courseValueDto.scheduler,
-      },
-    });
-    if (!existingCourseValue) {
-      return await this.createCourseValue(courseValueDto);
+    let existingCourseValue;
+    if (courseValueDto.location.startsWith(LAB_LOCATION_PREFIX) === true) {
+      existingCourseValue = await this.courseValueRepository.findOne({
+        where: {
+          location: Like(LAB_LOCATION_PREFIX),
+          courses: courseValueDto.courses,
+          scheduler: courseValueDto.scheduler,
+        },
+      });
+    } else {
+      existingCourseValue = await this.courseValueRepository.findOne({
+        where: {
+          courses: courseValueDto.courses,
+          scheduler: courseValueDto.scheduler,
+        },
+      });
     }
-
-    existingCourseValue.lecture = courseValueDto.lecture;
-    existingCourseValue.location = courseValueDto.location;
-
-    this.logger.debug(
-      `[UPDATE COURSE VALUE] update course value with course value's ID: ${existingCourseValue.id} successfully!`,
-    );
-    return await this.courseValueRepository.save(existingCourseValue);
-  }
-
-  async updateLabCourseValue(courseValueDto: CourseValueDto) {
-    const existingCourseValue = await this.courseValueRepository.findOne({
-      where: {
-        location: Like('LA%'),
-        courses: { id: courseValueDto.courses.id },
-        scheduler: { id: courseValueDto.scheduler.id },
-      },
-    });
     if (!existingCourseValue) {
       return await this.createCourseValue(courseValueDto);
     }
