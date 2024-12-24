@@ -56,10 +56,8 @@ export class CoursePositionService {
         savedCoursePos,
       )}`,
     );
-
     return savedCoursePos;
   }
-
 
   async existedLabCoursePos(
     course: CoursesEntity,

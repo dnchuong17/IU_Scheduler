@@ -83,6 +83,7 @@ export class ScheduleTemplateService {
           });
           // Create a new course position
           await this.coursePositonService.createCoursePos({
+            isLab: location.startsWith('LA'),
             days: date,
             periods: periodsCount,
             startPeriod: startPeriod,
@@ -140,6 +141,7 @@ export class ScheduleTemplateService {
               });
             } else {
               await this.coursePositonService.updateLabCoursePos({
+                isLab: location.startsWith('LA'),
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
@@ -158,6 +160,7 @@ export class ScheduleTemplateService {
 
             // Update course position (if required)
             await this.coursePositonService.updateCoursePos({
+              isLab: location.startsWith('LA'),
               days: date,
               periods: periodsCount,
               startPeriod: startPeriod,
@@ -277,6 +280,7 @@ export class ScheduleTemplateService {
                 });
               } else {
                 await this.coursePositonService.updateLabCoursePos({
+                  isLab: location.startsWith('LA'),
                   days: date,
                   periods: periodsCount,
                   startPeriod: startPeriod,
@@ -295,6 +299,7 @@ export class ScheduleTemplateService {
 
               // Update course position (if required)
               await this.coursePositonService.updateCoursePos({
+                isLab: location.startsWith('LA'),
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,

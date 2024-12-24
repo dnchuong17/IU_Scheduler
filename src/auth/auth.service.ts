@@ -109,8 +109,6 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('Invalid username or password');
     }
-    console.log(user);
-
     const payload = {
       username: signInDto.email,
       sub: {
