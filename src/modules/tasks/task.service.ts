@@ -17,7 +17,7 @@ export class TaskService implements OnModuleInit {
     this.logger = new Logger(TaskService.name);
     this.addRule({
       ruleName: 'Auto Sync Scheduler when create new user',
-      cronExpression: '*/ * * * *',
+      cronExpression: '*/2 * * * *',
       execute: this.syncSchedulerRealTime.bind(this),
     });
 

@@ -357,6 +357,7 @@ export class SyncDataService {
           }
         }
       });
+
       for (const coursePosDto of allCoursePositions) {
         const coursePosExists =
           await this.coursePosService.existsCoursePosition(coursePosDto);
