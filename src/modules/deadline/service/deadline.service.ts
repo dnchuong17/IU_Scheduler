@@ -58,18 +58,20 @@ export class DeadlineService {
     return await this.dataSource.query(query);
   }
 
-  async activeAlert(deadlineDto: DeadlineDto, id: number) {
-    const active = deadlineDto.isActive;
+  async activeAlert(isActive: boolean, id: number) {
     try {
       await this.deadlineRepository
         .createQueryBuilder()
         .update(DeadlineEntity)
         .set({
-          isActive: !active,
+          isActive: !isActive,
         })
         .where('id = :id', { id })
         .execute();
-      return 'turn on alert';
+      if (isActive == true) {
+        return 'turn on alert';
+      }
+      return 'turn off alert';
     } catch (error) {
       throw new BadRequestException(error);
     }

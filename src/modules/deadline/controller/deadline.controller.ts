@@ -16,9 +16,9 @@ export class DeadlineController {
     return this.deadlineService.createDeadline(deadlineDto);
   }
 
-  @Patch('id')
-  activeAlert(@Body() deadlineDto: DeadlineDto, @Param('id') id: number) {
-    return this.deadlineService.activeAlert(deadlineDto, id);
+  @Patch('/:id')
+  activeAlert(@Body('isActive') isActive: boolean, @Param('id') id: number) {
+    return this.deadlineService.activeAlert(isActive, id);
   }
 
   @Get('by-course-value/:courseValueId')
