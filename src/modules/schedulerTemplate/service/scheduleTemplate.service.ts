@@ -354,8 +354,9 @@ export class ScheduleTemplateService {
   async getTemplate(id: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] Get one template information by id');
 
-    const query = `
-      SELECT 
+    const templateQuery = `
+    SELECT 
+        st.scheduler_id,
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
@@ -367,19 +368,80 @@ export class ScheduleTemplateService {
         c.course_name,
         c.credits,
         c.course_code,
-        cv.course_value_id,
-        cv.lecture,
-        cv.location
-      FROM scheduler_template st
-      LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
-      LEFT JOIN courses c ON cp."coursesId" = c.course_id
-      LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
-      WHERE st.scheduler_id = $1;
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.course_value_id 
+            ELSE null 
+        END) AS theory_course_value_id,
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.lecture 
+            ELSE null 
+        END) AS theory_lecture,
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.location 
+            ELSE null 
+        END) AS theory_location,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.course_value_id 
+            ELSE null 
+        END) AS lab_course_value_id,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.lecture 
+            ELSE null 
+        END) AS lab_lecture,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.location 
+            ELSE null 
+        END) AS lab_location
+    FROM scheduler_template st
+    LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
+    LEFT JOIN courses c ON c.course_id = cp."coursesId"
+    LEFT JOIN course_value cv_theory 
+        ON cv_theory."schedulerId" = st.scheduler_id 
+        AND cv_theory."coursesId" = c.course_id
+    LEFT JOIN course_value cv_lab 
+        ON cv_lab."schedulerId" = st.scheduler_id 
+        AND cv_lab."coursesId" = c.course_id
+    WHERE st.scheduler_id = $1
+    GROUP BY 
+        st.scheduler_id, st.issynced, st.is_main_template, st.lastsynctime,
+        cp.course_position_id, cp.days_in_week, cp.start_period, cp.periods,
+        c.course_id, c.course_name, c.credits, c.course_code;
     `;
-    const schedule = await this.datasource.query(query, [id]);
+
+    const schedule = await this.datasource.query(templateQuery, [id]);
+
     return schedule;
   }
 
+
+
+
+  //  SELECT
+  //         st.issynced,
+  //         st.is_main_template,
+  //         st.lastsynctime,
+  //         cp.course_position_id,
+  //         cp.days_in_week,
+  //         cp.start_period,
+  //         cp.periods,
+  //         c.course_id,
+  //         c.course_name,
+  //         c.credits,
+  //         c.course_code,
+  //         cv.course_value_id,
+  //         cv.lecture,
+  //         cv.location
+  //       FROM scheduler_template st
+  //       LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
+  //       LEFT JOIN courses c ON cp."coursesId" = c.course_id
+  //       LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
+  //       WHERE st.scheduler_id = $1;
   async getAllTemplateIds(userId: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] get all template ids');
     const query =

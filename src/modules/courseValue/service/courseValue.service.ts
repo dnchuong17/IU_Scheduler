@@ -131,13 +131,13 @@ export class CourseValueService {
 
     if (!existingCourseValue) {
       this.logger.debug(
-        `[FIND COURSE VALUE] Course value not found with provided details`,
+        `[FIND LAB COURSE VALUE] Course value not found with provided details`,
       );
       return null;
     }
 
     this.logger.debug(
-      `[FIND COURSE VALUE] Found course value with ID: ${existingCourseValue.id}`,
+      `[FIND LAB COURSE VALUE] Found course value with ID: ${existingCourseValue.id}`,
     );
 
     return existingCourseValue;
