@@ -343,6 +343,28 @@ export class SyncDataService {
       for (const coursePosDto of allCoursePositions) {
         const exists =
           await this.coursePosService.existsCoursePosition(coursePosDto);
+
+        if (coursePosExists) {
+          this.logger.debug(
+            '[SYNC DATA FROM SCHEDULE] Existed course position',
+          );
+          continue;
+        }
+
+        let newCourseValueCreated = false;
+        for (const coursePosDto of allCoursePositions) {
+          const coursePosExists =
+            await this.coursePosService.existsCoursePosition(coursePosDto);
+          if (coursePosExists) continue;
+        }
+        await this.coursePosService.createCoursePos(coursePosDto);
+
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] Check existed course value',
+        );
+        for (const courseValueDto of allCourseDetails) {
+          const courseExists =
+            await this.courseValueService.existsCourseValue(courseValueDto);
         if (!exists) {
           await this.coursePosService.createCoursePos(
             coursePosDto,
