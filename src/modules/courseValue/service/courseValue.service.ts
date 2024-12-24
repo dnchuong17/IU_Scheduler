@@ -91,6 +91,7 @@ export class CourseValueService {
   }
 
   async existsCourseValue(courseValueDto: CourseValueDto) {
+    // query het  [] map courseId -> courseValue
     const existingValue = await this.courseValueRepository.findOne({
       where: {
         courses: courseValueDto.courses,
