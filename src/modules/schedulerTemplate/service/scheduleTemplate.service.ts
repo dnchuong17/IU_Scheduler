@@ -11,9 +11,7 @@ import { CourseValueService } from '../../courseValue/service/courseValue.servic
 import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
-import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { NoteService } from '../../note/service/note.service';
-import { IsNotEmpty, IsString } from 'class-validator';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
