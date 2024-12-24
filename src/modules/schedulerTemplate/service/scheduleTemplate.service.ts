@@ -356,7 +356,9 @@ export class ScheduleTemplateService {
   }
 
   async getTemplate(id: number) {
-    this.logger.debug('[SCHEDULE TEMPLATE] Get one template information by id');
+    this.logger.debug(
+      `[SCHEDULE TEMPLATE] Get one template information by id ${id}`,
+    );
 
     const templateQuery = `
     SELECT 
@@ -364,6 +366,7 @@ export class ScheduleTemplateService {
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
+        cp."isLab",
         cp.course_position_id,
         cp.days_in_week,
         cp.start_period,
@@ -422,7 +425,6 @@ export class ScheduleTemplateService {
 
     return schedule;
   }
-
 
   async getAllTemplateIds(userId: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] get all template ids');
