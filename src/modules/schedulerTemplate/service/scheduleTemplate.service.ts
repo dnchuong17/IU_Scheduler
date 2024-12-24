@@ -100,31 +100,63 @@ export class ScheduleTemplateService {
         // If one course can be found by course code
         else {
           // If this course have lab
-          if (isLab) {
-            // Create a new course position
-            await this.coursePositonService.createCoursePos({
-              days: date,
-              periods: periodsCount,
-              startPeriod: startPeriod,
-              scheduler: newTemplate,
-              courses: existedCourse,
-            });
-            // Create a new course value
-            await this.courseValueService.createCourseValue({
-              lecture: lecturer,
-              location: location,
-              courses: existedCourse,
-              scheduler: newTemplate,
-            });
+          if (isLab === true) {
+            // If the course is a lab, check if the lab course value exists
+            const existingLabCourseVal =
+              await this.courseValueService.existedLabCourseValue(
+                existedCourse,
+                newTemplate,
+              );
+            // If we can not find the course value of one lab
+            if (existingLabCourseVal === null) {
+              await this.courseValueService.createLabCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: existedCourse,
+                scheduler: newTemplate,
+              });
+            } else {
+              await this.courseValueService.updateLabCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: existedCourse,
+                scheduler: newTemplate,
+              });
+            }
+            const existingLabCoursePos =
+              await this.coursePositonService.existedLabCoursePos(
+                existedCourse,
+                newTemplate,
+              );
+            // If we can not find the course position of one lab
+            if (existingLabCoursePos === null) {
+              await this.coursePositonService.createLabCoursePos({
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: newTemplate,
+                isLab: null,
+                courses: existedCourse,
+              });
+            } else {
+              await this.coursePositonService.updateLabCoursePos({
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: newTemplate,
+                courses: existedCourse,
+              });
+            }
           } else {
-            // update course value
+            // If the course is not a lab (theory course), update course value
             await this.courseValueService.updateCourseValue({
               lecture: lecturer,
               location: location,
               courses: existedCourse,
               scheduler: newTemplate,
             });
-            // update course position
+
+            // Update course position (if required)
             await this.coursePositonService.updateCoursePos({
               days: date,
               periods: periodsCount,
@@ -184,42 +216,22 @@ export class ScheduleTemplateService {
               credits: credits,
               isNew: true,
             });
-            if (isLab === false) {
-              // Create a new course position
-              await this.coursePositonService.createCoursePos({
-                days: date,
-                periods: periodsCount,
-                startPeriod: startPeriod,
-                scheduler: existedTemplate,
-                isLab: null,
-                courses: newCourse,
-              });
-              // Create a new course value
-              await this.courseValueService.createCourseValue({
-                lecture: lecturer,
-                location: location,
-                courses: newCourse,
-                scheduler: existedTemplate,
-              });
-            }
-            if (isLab === true) {
-              // Create a new lab course position
-              await this.coursePositonService.createLabCoursePos({
-                days: date,
-                periods: periodsCount,
-                startPeriod: startPeriod,
-                scheduler: existedTemplate,
-                isLab: null,
-                courses: newCourse,
-              });
-              // Create new lab course value
-              await this.courseValueService.createLabCourseValue({
-                lecture: lecturer,
-                location: location,
-                courses: newCourse,
-                scheduler: existedTemplate,
-              });
-            }
+            // Create a new course position
+            await this.coursePositonService.createCoursePos({
+              days: date,
+              periods: periodsCount,
+              startPeriod: startPeriod,
+              scheduler: existedTemplate,
+              isLab: null,
+              courses: newCourse,
+            });
+            // Create a new course value
+            await this.courseValueService.createCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: newCourse,
+              scheduler: existedTemplate,
+            });
           }
           // If one course can be found by course code
           else if (existedCourse) {
@@ -233,8 +245,14 @@ export class ScheduleTemplateService {
                   existedTemplate,
                 );
               // If we can not find the course value of one lab
-              if (existingLabCourseVal) {
-                // Update existing lab course value
+              if (existingLabCourseVal === null) {
+                await this.courseValueService.createLabCourseValue({
+                  lecture: lecturer,
+                  location: location,
+                  courses: existedCourse,
+                  scheduler: existedTemplate,
+                });
+              } else {
                 await this.courseValueService.updateLabCourseValue({
                   lecture: lecturer,
                   location: location,
@@ -248,8 +266,16 @@ export class ScheduleTemplateService {
                   existedTemplate,
                 );
               // If we can not find the course position of one lab
-              if (existingLabCoursePos) {
-                // Update existing lab course position
+              if (existingLabCoursePos === null) {
+                await this.coursePositonService.createLabCoursePos({
+                  days: date,
+                  periods: periodsCount,
+                  startPeriod: startPeriod,
+                  scheduler: existedTemplate,
+                  isLab: null,
+                  courses: existedCourse,
+                });
+              } else {
                 await this.coursePositonService.updateLabCoursePos({
                   days: date,
                   periods: periodsCount,
