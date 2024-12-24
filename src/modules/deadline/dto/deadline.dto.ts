@@ -1,5 +1,10 @@
-import { DeadlineConstant, DeadlineType } from '../../../common/deadline.constant';
+import {
+  DeadlineConstant,
+  DeadlineType,
+} from '../../../common/deadline.constant';
 import { IsBoolean, IsDate, IsEnum, IsOptional } from 'class-validator';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
+import { UserEntity } from '../../user/entity/user.entity';
 
 export class DeadlineDto {
   @IsBoolean()
@@ -18,5 +23,7 @@ export class DeadlineDto {
   @IsDate()
   date: Date;
 
-  courseValueId: number;
+  courseValue: CourseValueEntity;
+
+  user: UserEntity;
 }

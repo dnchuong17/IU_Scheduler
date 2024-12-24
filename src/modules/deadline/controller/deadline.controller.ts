@@ -6,9 +6,9 @@ import { DeadlineDto } from '../dto/deadline.dto';
 export class DeadlineController {
   constructor(private readonly deadlineService: DeadlineService) {}
 
-  @Get()
-  getAllDeadline() {
-    return this.deadlineService.getAllDeadline();
+  @Get('/:id')
+  getAllDeadline(@Param('id') userId: number) {
+    return this.deadlineService.getAllDeadlineByUId(userId);
   }
 
   @Post('create')

@@ -9,6 +9,7 @@ import { DeadlineEntity } from '../entity/deadline.entity';
 import { DeadlineDto } from '../dto/deadline.dto';
 import { CourseValueService } from '../../courseValue/service/courseValue.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
+import { UserService } from "../../user/service/user.service";
 
 @Injectable()
 export class DeadlineService {
@@ -18,44 +19,42 @@ export class DeadlineService {
     private readonly dataSource: DataSource,
     private readonly courseValueService: CourseValueService,
     private readonly logger: TracingLoggerService,
+    private readonly userService: UserService
   ) {
     this.logger.setContext(DeadlineService.name);
   }
 
   async createDeadline(deadlineDto: DeadlineDto) {
-    const existCourseValue = await this.courseValueService.getCourseValue(
-      deadlineDto.courseValueId,
-    );
-
-    if (!existCourseValue) {
-      return {
-        message: 'Course value not found',
-        statusCode: 404,
-      };
-    }
-
     await this.deadlineRepository
       .createQueryBuilder()
       .insert()
       .into(DeadlineEntity)
       .values({
-        isActive: deadlineDto.isActive,
+        isActive: deadlineDto.isActive ?? false,
         deadlineType: deadlineDto.deadlineType,
-        priority: deadlineDto.priority,
+        priority: deadlineDto.priority || null,
         description: deadlineDto.description,
         deadline: new Date(deadlineDto.date),
-        courseValue: existCourseValue,
+        courseValue: deadlineDto.courseValue,
+        user: deadlineDto.user,
       })
       .execute();
 
     return {
       message: 'Deadline created successfully',
+      statusCode: 201,
     };
   }
 
-  async getAllDeadline() {
-    const query = 'SELECT * FROM deadline where is_Active = true';
-    return await this.dataSource.query(query);
+  async getAllDeadlineByUId(userId: number) {
+    const query = 'SELECT "UID" FROM deadline WHERE "userId" = $1';
+    const deadlineIds = await this.dataSource.query(query, [userId]);
+    return {
+      message: 'Deadlines retrieved successfully',
+      data: {
+        UIDs: deadlineIds.map((deadline) => deadline.UID),
+      },
+    };
   }
 
   async activeAlert(isActive: boolean, id: number) {
