@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ScheduleTemplateService } from '../service/scheduleTemplate.service';
 import { TracingLoggerService } from '../../../logger/tracing-logger.service';
-import { SchedulerTemplateDto } from "../dto/scheduler-Template.dto";
+import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 
 @Controller('scheduleTemplate')
 export class SchedulerTemplateController {
@@ -24,6 +24,11 @@ export class SchedulerTemplateController {
     return this.templateService.getTemplate(id);
   }
 
+  @Get('all/:studentId')
+  getAllTemplateBySid(@Param('studentId') studentId: string) {
+    return this.templateService.getAllTemplateBySID(studentId);
+  }
+
   @Post('create')
   createTemplate(@Body() templateDto: SchedulerTemplateDto) {
     try {
@@ -34,8 +39,13 @@ export class SchedulerTemplateController {
     }
   }
 
+  @Get('templateIds/:userId')
+  getAllTemplateIds(@Param('userId') userId: number) {
+    return this.templateService.getAllTemplateIds(userId);
+  }
+
   @Post('createSchedule')
   createScheduler(@Body() schedulerTemplateDto: SchedulerTemplateDto) {
-    return this.templateService.createSchedule(schedulerTemplateDto);
+    return this.templateService.generateSchedule(schedulerTemplateDto);
   }
 }

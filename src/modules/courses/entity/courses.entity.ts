@@ -33,12 +33,14 @@ export class CoursesEntity extends BaseEntity {
   @Column({ name: 'isNew', nullable: false, type: 'boolean' })
   isNew: boolean;
 
-  @OneToOne(
+  @OneToMany(
     () => CoursePositionEntity,
     (coursePosition) => coursePosition.courses,
   )
-  coursePosition: CoursePositionEntity;
+  coursePosition: CoursePositionEntity[];
 
-  @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses)
+  @OneToMany(() => CourseValueEntity, (courseValue) => courseValue.courses, {
+    cascade: true,
+  })
   courseValues: CourseValueEntity[];
 }

@@ -14,18 +14,28 @@ export class UserService {
     private readonly datasource: DataSource,
     private readonly redisHelper: RedisHelper,
     private readonly logger: TracingLoggerService,
-  ) {}
+  ) {
+    this.logger.setContext(UserService.name);
+  }
 
   async findAccountWithEmail(email: string) {
-    this.logger.debug(`[FIND USER]-Find user via email ${email}`);
-    const cacheUser = await this.redisHelper.get(email);
+    this.logger.debug(
+      `[FIND USER] Direct query from database for email: ${email}`,
+    );
+
+    const cacheKey = `user:${email}`;
+    const cacheUser = await this.redisHelper.get(cacheKey);
+
     if (cacheUser) {
-      this.logger.debug('Found user from cache');
+      this.logger.debug('[FIND USER] Found user from cache');
       return JSON.parse(cacheUser);
     }
+
     const user = await this.userRepository.findOne({ where: { email } });
+
     if (user) {
-      await this.redisHelper.set(user.email, JSON.stringify(user));
+      this.logger.debug('[FIND USER] Saving user to Redis cache');
+      await this.redisHelper.set(cacheKey, JSON.stringify(user));
     }
     return user;
   }
@@ -63,10 +73,8 @@ export class UserService {
   async getUserInfor(id: number) {
     const query = `
     SELECT 
-      u.email, 
       u.name, 
-      u.student_id, 
-      ARRAY_AGG(st.scheduler_id) AS scheduler_ids
+      u.student_id
     FROM 
       student_users AS u 
     LEFT JOIN 
@@ -86,6 +94,4 @@ export class UserService {
 
     return user[0];
   }
-
-
 }

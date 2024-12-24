@@ -1,15 +1,18 @@
 import {
   BaseEntity,
   Column,
-  Entity, JoinColumn,
+  Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
-  OneToMany, OneToOne,
-  PrimaryGeneratedColumn
-} from "typeorm";
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 
 @Entity('course_position')
+@Index(['days', 'startPeriod'])
 export class CoursePositionEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ name: 'course_position_id' })
   id: number;
@@ -23,13 +26,15 @@ export class CoursePositionEntity extends BaseEntity {
   @Column({ name: 'periods', nullable: false })
   periods: number;
 
+  @Column({ name: 'isLab', nullable: true })
+  isLab: boolean;
+
   @ManyToOne(
     () => SchedulerTemplateEntity,
     (scheduler) => scheduler.coursePositions,
   )
   scheduler: SchedulerTemplateEntity;
 
-  @OneToOne(() => CoursesEntity, (course) => course.coursePosition)
-  @JoinColumn({ name: 'coursesId' })
+  @ManyToOne(() => CoursesEntity, (course) => course.coursePosition)
   courses: CoursesEntity;
 }

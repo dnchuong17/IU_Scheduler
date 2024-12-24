@@ -11,6 +11,8 @@ import { CoursePositionModule } from '../coursePosition/coursePosition.module';
 import { CourseValueModule } from '../courseValue/courseValue.module';
 import { CoursesModule } from '../courses/course.module';
 import { UserEntity } from '../user/entity/user.entity';
+import { NoteModule } from '../note/note.module';
+import { NoteService } from "../note/service/note.service";
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { UserEntity } from '../user/entity/user.entity';
     CoursesModule,
     CourseValueModule,
     forwardRef(() => CoursePositionModule),
+    forwardRef(() => NoteModule),
+    NoteModule,
   ],
   controllers: [SchedulerTemplateController],
   providers: [ScheduleTemplateService, TracingLoggerService, UserService],
