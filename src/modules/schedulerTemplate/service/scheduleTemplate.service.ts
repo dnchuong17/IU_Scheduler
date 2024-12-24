@@ -42,7 +42,7 @@ export class ScheduleTemplateService {
     return template;
   }
 
-  async createSchedule(schedulerTemplateDto: SchedulerTemplateDto) {
+  async generateSchedule(schedulerTemplateDto: SchedulerTemplateDto) {
     // Find student by student ID
     const existedStudent = await this.userService.findUserWithUID(
       schedulerTemplateDto.studentId,
