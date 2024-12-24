@@ -11,7 +11,9 @@ import { CourseValueService } from '../../courseValue/service/courseValue.servic
 import { CoursesService } from '../../courses/service/courses.service';
 import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
+import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { NoteService } from '../../note/service/note.service';
+import { IsNotEmpty, IsString } from 'class-validator';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -81,7 +83,7 @@ export class ScheduleTemplateService {
           });
           // Create a new course position
           await this.coursePositonService.createCoursePos({
-            isLab: location.startsWith('LA'),
+            isLab: isLab,
             days: date,
             periods: periodsCount,
             startPeriod: startPeriod,
@@ -139,7 +141,7 @@ export class ScheduleTemplateService {
               });
             } else {
               await this.coursePositonService.updateLabCoursePos({
-                isLab: location.startsWith('LA'),
+                isLab: isLab,
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
@@ -158,7 +160,7 @@ export class ScheduleTemplateService {
 
             // Update course position (if required)
             await this.coursePositonService.updateCoursePos({
-              isLab: location.startsWith('LA'),
+              isLab: isLab,
               days: date,
               periods: periodsCount,
               startPeriod: startPeriod,
@@ -278,7 +280,7 @@ export class ScheduleTemplateService {
                 });
               } else {
                 await this.coursePositonService.updateLabCoursePos({
-                  isLab: location.startsWith('LA'),
+                  isLab: isLab,
                   days: date,
                   periods: periodsCount,
                   startPeriod: startPeriod,
@@ -297,7 +299,7 @@ export class ScheduleTemplateService {
 
               // Update course position (if required)
               await this.coursePositonService.updateCoursePos({
-                isLab: location.startsWith('LA'),
+                isLab: isLab,
                 days: date,
                 periods: periodsCount,
                 startPeriod: startPeriod,
@@ -369,7 +371,6 @@ export class ScheduleTemplateService {
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
-        cp."isLab",
         cp.course_position_id,
         cp.days_in_week,
         cp.start_period,
@@ -474,6 +475,42 @@ export class ScheduleTemplateService {
     const schedule = await this.datasource.query(query, [existedStudent.id]);
     return schedule;
   }
+
+  async deleteTemplate(userId: number, schedulerId: number) {
+    const existingTemplate = await this.schedulerTemplateRepo.findOne({
+      where: {
+        id: schedulerId,
+        user: { id: userId },
+      },
+    });
+    if (!existingTemplate) {
+      this.logger.debug(
+        '[SCHEDULE TEMPLATE] fail to find schedule template to delete',
+      );
+    }
+    const deleteCoursePosQuery = `
+    DELETE FROM course_position cp
+    WHERE cp."schedulerId" = $1
+  `;
+
+    await this.datasource.query(deleteCoursePosQuery, [schedulerId]);
+
+    const deleteCourseValQuery = `
+    DELETE FROM course_value cv
+    WHERE cv."schedulerId" = $1`;
+
+    await this.datasource.query(deleteCourseValQuery, [schedulerId]);
+
+    this.logger.debug(
+      `[SCHEDULE TEMPLATE] successfully delete template with id ${schedulerId}`,
+    );
+
+    return this.datasource.query(
+      `DELETE FROM scheduler_template WHERE "userId" = $1 AND scheduler_id = $2`,
+      [userId, schedulerId],
+    );
+  }
+
   async getTemplateBySID(sid: string) {
     return await this.datasource
       .getRepository(SchedulerTemplateEntity)

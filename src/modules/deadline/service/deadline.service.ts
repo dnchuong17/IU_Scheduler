@@ -90,7 +90,12 @@ export class DeadlineService {
     }
   }
 
-  async getDeadlineByCoursealueId(courseValueId: number) {
+  async getDeadlineById(id: number) {
+    const deadlines = 'SELECT * FROM deadline WHERE id = $1';
+    return await this.dataSource.query(deadlines, [id]);
+  }
+
+  async getDeadlineByCourseValueId(courseValueId: number) {
     const deadlines = await this.deadlineRepository.query(
       `
     SELECT d.*
@@ -114,5 +119,11 @@ export class DeadlineService {
       message: `Found ${deadlines.length} active deadlines successfully`,
       deadlines,
     };
+  }
+
+  async deleteDeadline(id: number){
+    const deleteDeadlineQuery = 'DELETE FROM deadline WHERE "UID" = $1';
+    await this.dataSource.query(deleteDeadlineQuery,[id]);
+    this.logger.debug(`[FIND DEADLINE] successfully delete deadline with id ${id}`);
   }
 }

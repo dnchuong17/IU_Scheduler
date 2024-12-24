@@ -46,6 +46,6 @@ export class SchedulerTemplateController {
 
   @Post('createSchedule')
   createScheduler(@Body() schedulerTemplateDto: SchedulerTemplateDto) {
-    return this.templateService.createSchedule(schedulerTemplateDto);
+    return this.templateService.generateSchedule(schedulerTemplateDto);
   }
 }
