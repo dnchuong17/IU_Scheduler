@@ -6,14 +6,9 @@ import { NoteDto } from '../dto/note.dto';
 export class NoteController {
   constructor(private readonly noteService: NoteService) {}
 
-  @Get(':id')
-  getNoteById(@Param('id') id: number) {
-    return this.noteService.getNoteById(+id);
-  }
-
-  @Post('create')
-  createNote(@Body() noteDto: NoteDto) {
-    return this.noteService.createNote(noteDto);
+  @Get(':courseValueId')
+  getNoteById(@Param('courseValueId') courseValueId: number) {
+    return this.noteService.getNoteById(+courseValueId);
   }
 
   @Patch('update')

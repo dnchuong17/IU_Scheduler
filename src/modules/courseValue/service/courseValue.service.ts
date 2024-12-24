@@ -185,8 +185,8 @@ export class CourseValueService {
   }
 
   async deleteCourseValue(
-    courseId: number,
     schedulerId: number,
+    courseId?: number,
   ): Promise<void> {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {

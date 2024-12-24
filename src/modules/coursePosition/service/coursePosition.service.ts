@@ -204,7 +204,7 @@ export class CoursePositionService {
     return await this.coursePositionRepository.save(existingCoursePosition);
   }
 
-  async deleteCoursePos(courseId: number, schedulerId: number): Promise<void> {
+  async deleteCoursePos(schedulerId: number, courseId?: number): Promise<void> {
     const existingCoursePosition = await this.coursePositionRepository.findOne({
       where: {
         courses: { id: courseId },
@@ -226,4 +226,6 @@ export class CoursePositionService {
       `[DELETE COURSE POSITION]Deleted course position with ID: ${existingCoursePosition.id} successfully!`,
     );
   }
+
+
 }

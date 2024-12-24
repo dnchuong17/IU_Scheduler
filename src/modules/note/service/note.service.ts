@@ -41,7 +41,7 @@ export class NoteService {
     return note;
   }
 
-  async createNote(noteDto: NoteDto) {
+  async createDefaultNote(noteDto: NoteDto) {
     const existingCourseValue = await this.courseValueService.getCourseValue(
       noteDto.courseValueId,
     );

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -47,5 +48,13 @@ export class SchedulerTemplateController {
   @Post('createSchedule')
   createScheduler(@Body() schedulerTemplateDto: SchedulerTemplateDto) {
     return this.templateService.createSchedule(schedulerTemplateDto);
+  }
+
+  @Delete('deleteTemplate/:userId/:schedulerId')
+  deleteTemplate(
+    @Param('userId') userId: number,
+    @Param('schedulerId') schedulerId: number,
+  ) {
+    return this.templateService.deleteTemplate(userId, schedulerId);
   }
 }
