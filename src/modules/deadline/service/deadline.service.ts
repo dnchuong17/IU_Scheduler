@@ -60,7 +60,8 @@ export class DeadlineService {
   }
 
   async getAllDeadlineByUId(userId: number) {
-    const query = 'SELECT "UID" FROM deadline WHERE "userId" = $1 AND is_Active = false';
+    const query =
+      'SELECT "UID" FROM deadline WHERE "userId" = $1 AND is_Active = false';
     const deadlineIds = await this.dataSource.query(query, [userId]);
     return {
       message: 'Deadlines retrieved successfully',
@@ -95,7 +96,7 @@ export class DeadlineService {
     SELECT d.*
     FROM deadline d
     INNER JOIN course_value cv ON d."courseValueId" = cv.course_value_id
-    WHERE cv.course_value_id = $1 AND d."is_Active" = true
+    WHERE cv.course_value_id = $1
     `,
       [courseValueId],
     );
