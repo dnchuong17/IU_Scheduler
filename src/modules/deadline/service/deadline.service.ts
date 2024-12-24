@@ -64,7 +64,7 @@ export class DeadlineService {
         .createQueryBuilder()
         .update(DeadlineEntity)
         .set({
-          isActive: !isActive,
+          isActive: isActive,
         })
         .where('id = :id', { id })
         .execute();
