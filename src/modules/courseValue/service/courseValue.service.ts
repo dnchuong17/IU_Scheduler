@@ -11,6 +11,7 @@ import { TracingLoggerService } from '../../../logger/tracing-logger.service';
 import { NoteEntity } from '../../note/entity/note.entity';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
+import { CourseValueConstant } from "../dto/courseValue.constant";
 
 @Injectable()
 export class CourseValueService {
@@ -122,7 +123,7 @@ export class CourseValueService {
   ) {
     const existingCourseValue = await this.courseValueRepository.findOne({
       where: {
-        location: Like('LA%'),
+        location: Like(CourseValueConstant.LAB_LOCATION_PREFIX),
         courses: { id: course.id },
         scheduler: { id: scheduler.id },
       },
