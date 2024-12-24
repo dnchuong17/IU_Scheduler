@@ -60,7 +60,7 @@ export class DeadlineService {
   }
 
   async getAllDeadlineByUId(userId: number) {
-    const query = 'SELECT "UID" FROM deadline WHERE "userId" = $1';
+    const query = 'SELECT "UID" FROM deadline WHERE "userId" = $1 AND is_Active = false';
     const deadlineIds = await this.dataSource.query(query, [userId]);
     return {
       message: 'Deadlines retrieved successfully',
