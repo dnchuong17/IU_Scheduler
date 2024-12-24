@@ -21,6 +21,8 @@ import { typeOrmConfigAsync } from './config/typeorm.config';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './modules/user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { TaskModule } from './modules/tasks/task.module';
+import { ScheduleModule } from '@nestjs/schedule';
 dotenv.config();
 
 @Module({
@@ -47,6 +49,8 @@ dotenv.config();
       publicEmailValidateAPI: process.env.API_VALIDATE_EMAIL,
       isPublic: true,
     }),
+    TaskModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [],

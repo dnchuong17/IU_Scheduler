@@ -9,11 +9,12 @@ import { SchedulerTemplateEntity } from './entity/schedulerTemplate.entity';
 import { UserService } from '../user/service/user.service';
 import { CoursePositionModule } from '../coursePosition/coursePosition.module';
 import { CourseValueModule } from '../courseValue/courseValue.module';
-import {CoursesModule} from "../courses/course.module";
+import { CoursesModule } from '../courses/course.module';
+import { UserEntity } from '../user/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SchedulerTemplateEntity]),
+    TypeOrmModule.forFeature([SchedulerTemplateEntity, UserEntity]),
     forwardRef(() => UserModule),
     TracingLoggerModule,
     CoursesModule,
