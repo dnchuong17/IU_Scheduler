@@ -18,6 +18,7 @@ export class CreateTemplateItemDto {
   @IsNotEmpty()
   lecturer: string;
   isActive: boolean;
+  isLab: boolean;
   @IsNotEmpty()
   isDeleted: boolean;
 }

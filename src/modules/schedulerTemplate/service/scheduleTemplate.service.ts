@@ -13,6 +13,7 @@ import { SchedulerTemplateDto } from '../dto/scheduler-Template.dto';
 import { CreateTemplateItemDto } from '../dto/createTemplateItem.dto';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { NoteService } from '../../note/service/note.service';
+import { IsNotEmpty, IsString } from 'class-validator';
 @Injectable()
 export class ScheduleTemplateService {
   constructor(
@@ -67,6 +68,7 @@ export class ScheduleTemplateService {
           credits,
           location,
           lecturer,
+          isLab,
           isDeleted,
         } = course;
         const existedCourse =
@@ -96,23 +98,73 @@ export class ScheduleTemplateService {
           });
         }
         // If one course can be found by course code
-        if (existedCourse) {
-          // If is deleted is true => deleted
-          // update course value
-          await this.courseValueService.updateCourseValue({
-            lecture: lecturer,
-            location: location,
-            courses: existedCourse,
-            scheduler: newTemplate,
-          });
-          // update course position
-          await this.coursePositonService.updateCoursePos({
-            days: date,
-            periods: periodsCount,
-            startPeriod: startPeriod,
-            courses: existedCourse,
-            scheduler: newTemplate,
-          });
+        else {
+          // If this course have lab
+          if (isLab === true) {
+            // If the course is a lab, check if the lab course value exists
+            const existingLabCourseVal =
+              await this.courseValueService.existedLabCourseValue(
+                existedCourse,
+                newTemplate,
+              );
+            // If we can not find the course value of one lab
+            if (existingLabCourseVal === null) {
+              await this.courseValueService.createLabCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: existedCourse,
+                scheduler: newTemplate,
+              });
+            } else {
+              await this.courseValueService.updateLabCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: existedCourse,
+                scheduler: newTemplate,
+              });
+            }
+            const existingLabCoursePos =
+              await this.coursePositonService.existedLabCoursePos(
+                existedCourse,
+                newTemplate,
+              );
+            // If we can not find the course position of one lab
+            if (existingLabCoursePos === null) {
+              await this.coursePositonService.createLabCoursePos({
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: newTemplate,
+                isLab: null,
+                courses: existedCourse,
+              });
+            } else {
+              await this.coursePositonService.updateLabCoursePos({
+                days: date,
+                periods: periodsCount,
+                startPeriod: startPeriod,
+                scheduler: newTemplate,
+                courses: existedCourse,
+              });
+            }
+          } else {
+            // If the course is not a lab (theory course), update course value
+            await this.courseValueService.updateCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: existedCourse,
+              scheduler: newTemplate,
+            });
+
+            // Update course position (if required)
+            await this.coursePositonService.updateCoursePos({
+              days: date,
+              periods: periodsCount,
+              startPeriod: startPeriod,
+              courses: existedCourse,
+              scheduler: newTemplate,
+            });
+          }
         }
       }
       return {
@@ -150,6 +202,7 @@ export class ScheduleTemplateService {
             credits,
             location,
             lecturer,
+            isLab,
             isDeleted,
           } = course;
           const existedCourse =
@@ -169,6 +222,7 @@ export class ScheduleTemplateService {
               periods: periodsCount,
               startPeriod: startPeriod,
               scheduler: existedTemplate,
+              isLab: null,
               courses: newCourse,
             });
             // Create a new course value
@@ -180,19 +234,66 @@ export class ScheduleTemplateService {
             });
           }
           // If one course can be found by course code
-          if (existedCourse) {
-            // If is deleted is true => deleted
+          else if (existedCourse) {
             if (isDeleted) {
               await this.deleteCourse(existedCourse.id, existedTemplate.id);
+            } else if (isLab === true) {
+              // If the course is a lab, check if the lab course value exists
+              const existingLabCourseVal =
+                await this.courseValueService.existedLabCourseValue(
+                  existedCourse,
+                  existedTemplate,
+                );
+              // If we can not find the course value of one lab
+              if (existingLabCourseVal === null) {
+                await this.courseValueService.createLabCourseValue({
+                  lecture: lecturer,
+                  location: location,
+                  courses: existedCourse,
+                  scheduler: existedTemplate,
+                });
+              } else {
+                await this.courseValueService.updateLabCourseValue({
+                  lecture: lecturer,
+                  location: location,
+                  courses: existedCourse,
+                  scheduler: existedTemplate,
+                });
+              }
+              const existingLabCoursePos =
+                await this.coursePositonService.existedLabCoursePos(
+                  existedCourse,
+                  existedTemplate,
+                );
+              // If we can not find the course position of one lab
+              if (existingLabCoursePos === null) {
+                await this.coursePositonService.createLabCoursePos({
+                  days: date,
+                  periods: periodsCount,
+                  startPeriod: startPeriod,
+                  scheduler: existedTemplate,
+                  isLab: null,
+                  courses: existedCourse,
+                });
+              } else {
+                await this.coursePositonService.updateLabCoursePos({
+                  days: date,
+                  periods: periodsCount,
+                  startPeriod: startPeriod,
+                  scheduler: existedTemplate,
+                  courses: existedCourse,
+                });
+              }
             } else {
-              // update course value
+              // If the course is not a lab (theory course), update course value
               await this.courseValueService.updateCourseValue({
                 lecture: lecturer,
                 location: location,
                 courses: existedCourse,
                 scheduler: existedTemplate,
               });
-              // update course position
+
+              // Update course position (if required)
               await this.coursePositonService.updateCoursePos({
                 days: date,
                 periods: periodsCount,
@@ -204,6 +305,10 @@ export class ScheduleTemplateService {
           }
         }
       }
+      return {
+        message: `update template with template id: ${existedTemplate.id} successfully`,
+        templateId: existedTemplate.id,
+      };
     }
   }
   // Delete all course
@@ -253,8 +358,9 @@ export class ScheduleTemplateService {
   async getTemplate(id: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] Get one template information by id');
 
-    const query = `
-      SELECT 
+    const templateQuery = `
+    SELECT 
+        st.scheduler_id,
         st.issynced, 
         st.is_main_template, 
         st.lastsynctime,
@@ -266,18 +372,57 @@ export class ScheduleTemplateService {
         c.course_name,
         c.credits,
         c.course_code,
-        cv.course_value_id,
-        cv.lecture,
-        cv.location
-      FROM scheduler_template st
-      LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
-      LEFT JOIN courses c ON cp."coursesId" = c.course_id
-      LEFT JOIN course_value cv ON cv."coursesId" = c.course_id
-      WHERE st.scheduler_id = $1;
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.course_value_id 
+            ELSE null 
+        END) AS theory_course_value_id,
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.lecture 
+            ELSE null 
+        END) AS theory_lecture,
+        MAX(CASE 
+            WHEN (cp."isLab" = false OR cp."isLab" IS NULL) AND cv_theory.location NOT LIKE 'LA%' 
+            THEN cv_theory.location 
+            ELSE null 
+        END) AS theory_location,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.course_value_id 
+            ELSE null 
+        END) AS lab_course_value_id,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.lecture 
+            ELSE null 
+        END) AS lab_lecture,
+        MAX(CASE 
+            WHEN (cp."isLab" = true OR (cp."isLab" IS NULL AND cv_lab.location LIKE 'LA%')) 
+            THEN cv_lab.location 
+            ELSE null 
+        END) AS lab_location
+    FROM scheduler_template st
+    LEFT JOIN course_position cp ON st.scheduler_id = cp."schedulerId"
+    LEFT JOIN courses c ON c.course_id = cp."coursesId"
+    LEFT JOIN course_value cv_theory 
+        ON cv_theory."schedulerId" = st.scheduler_id 
+        AND cv_theory."coursesId" = c.course_id
+    LEFT JOIN course_value cv_lab 
+        ON cv_lab."schedulerId" = st.scheduler_id 
+        AND cv_lab."coursesId" = c.course_id
+    WHERE st.scheduler_id = $1
+    GROUP BY 
+        st.scheduler_id, st.issynced, st.is_main_template, st.lastsynctime,
+        cp.course_position_id, cp.days_in_week, cp.start_period, cp.periods,
+        c.course_id, c.course_name, c.credits, c.course_code;
     `;
-    const schedule = await this.datasource.query(query, [id]);
+
+    const schedule = await this.datasource.query(templateQuery, [id]);
+
     return schedule;
   }
+
 
   async getAllTemplateIds(userId: number) {
     this.logger.debug('[SCHEDULE TEMPLATE] get all template ids');

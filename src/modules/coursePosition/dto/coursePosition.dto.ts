@@ -11,6 +11,7 @@ export class CoursePositionDto {
   @IsNotEmpty()
   periods: number;
   startPeriod: number;
+  isLab?: boolean;
   courses: CoursesEntity;
   scheduler: SchedulerTemplateEntity;
 }
