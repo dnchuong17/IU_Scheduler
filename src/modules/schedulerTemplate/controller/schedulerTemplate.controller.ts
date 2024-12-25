@@ -26,7 +26,7 @@ export class SchedulerTemplateController {
 
   @Get('/main/:id')
   getMainTemplate(@Param('id') id: number) {
-    return this.templateService.getTemplate(id);
+    return this.templateService.getTemplateMain(id);
   }
 
   @Get('all/:studentId')
