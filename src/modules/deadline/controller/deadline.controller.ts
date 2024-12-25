@@ -19,12 +19,12 @@ export class DeadlineController {
     return this.deadlineService.createDeadline(deadlineDto);
   }
 
-  @Patch('detail/:id')
+  @Patch('/:id')
   activeAlert(@Body('isActive') isActive: boolean, @Param('id') id: number) {
     return this.deadlineService.activeAlert(isActive, id);
   }
 
-  @Get(':id')
+  @Get('/detail/:id')
   getDeadlineById(@Param('id') id: number) {
     return this.deadlineService.getDeadlineById(id);
   }
