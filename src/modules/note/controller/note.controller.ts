@@ -11,10 +11,10 @@ export class NoteController {
     return this.noteService.getNoteByCourseValueId(+id);
   }
 
-  @Post('create')
-  createNote(@Body() noteDto: NoteDto) {
-    return this.noteService.createNote(noteDto);
-  }
+  // @Post('create')
+  // createNote(@Body() noteDto: NoteDto) {
+  //   return this.noteService.createNote(noteDto);
+  // }
 
   @Patch('update')
   updateNote(@Body() noteDto: NoteDto) {

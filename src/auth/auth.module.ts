@@ -27,6 +27,7 @@ import { RefreshTokenStrategy } from './strategy/refreshToken.strategy';
 import { AuthController } from './auth.controller';
 import { CoursePositionService } from '../modules/coursePosition/service/coursePosition.service';
 import { CoursePositionEntity } from '../modules/coursePosition/entity/coursePosition.entity';
+import {NoteModule} from "../modules/note/note.module";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CoursePositionEntity } from '../modules/coursePosition/entity/coursePos
     RedisModule,
     SyncModule,
     CoursesModule,
+    NoteModule,
     JwtModule.register({
       secret: `${process.env.SECRETEKEY}`,
       signOptions: { expiresIn: '300s' },

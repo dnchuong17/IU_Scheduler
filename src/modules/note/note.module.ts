@@ -12,7 +12,7 @@ import { CourseValueModule } from '../courseValue/courseValue.module';
     TypeOrmModule.forFeature([NoteEntity]),
     TracingLoggerModule,
     forwardRef(() => ScheduleTemplateModule),
-    CourseValueModule,
+    forwardRef(() =>CourseValueModule),
   ],
   controllers: [NoteController],
   providers: [NoteService],

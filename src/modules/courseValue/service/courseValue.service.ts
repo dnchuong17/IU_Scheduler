@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  BadRequestException, forwardRef, Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,12 +12,14 @@ import { NoteEntity } from '../../note/entity/note.entity';
 import { CoursesEntity } from '../../courses/entity/courses.entity';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 import { LAB_LOCATION_PREFIX } from '../dto/courseValue.constant';
+import {NoteService} from "../../note/service/note.service";
 
 @Injectable()
 export class CourseValueService {
   constructor(
     @InjectRepository(CourseValueEntity)
     private readonly courseValueRepository: Repository<CourseValueEntity>,
+    @Inject(forwardRef(() => NoteService)) private readonly noteService: NoteService,
     private readonly logger: TracingLoggerService,
   ) {
     this.logger.setContext(CourseValueService.name);
@@ -74,7 +76,10 @@ export class CourseValueService {
         scheduler: courseValueDto.scheduler,
       });
       const savedCourseValue = await manager.save(newCourseValue);
-
+      await this.noteService.createNote({
+        content: '',
+        courseValueId: newCourseValue.id,
+      })
       this.logger.debug(
         `[CREATE COURSE VALUE] Created successfully: ${JSON.stringify(
           savedCourseValue,

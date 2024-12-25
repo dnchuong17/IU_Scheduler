@@ -1,6 +1,6 @@
 import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
 
 export class NoteDto {
-  content?: string;
+  content?: string | null;
   courseValueId: number;
 }
