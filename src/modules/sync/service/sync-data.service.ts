@@ -304,9 +304,8 @@ export class SyncDataService {
       const allCourseDetails: CourseValueDto[] = [];
       const allCoursePositions: CoursePositionDto[] = [];
 
-      $('td[onmouseover^="ddrivetip"]').each(async (_, element) => {
-        const $element = $(element);
-        const onmouseoverAttr = $element.attr('onmouseover');
+      $('td[onmouseover^="ddrivetip"]').each((_, element) => {
+        const onmouseoverAttr = $(element).attr('onmouseover');
         if (onmouseoverAttr) {
           const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
           if (paramsString) {
@@ -314,39 +313,26 @@ export class SyncDataService {
               .split(',')
               .map((param) => param.replace(/'/g, '').trim());
 
-            // Extract course details
-            const courseCodeFull = params[2].toUpperCase().trim();
-            const baseCourseCode =
-              courseCodeFull.match(/^([A-Z0-9]+)/)?.[0] ?? '';
-            const courseName = $element.find('span').first().text().trim();
-            const credits = parseInt(params[6], 10) || 0;
+            const courseCode = params[2].toUpperCase().trim();
+            const baseCourseCode = courseCode.match(/^([A-Z0-9]+)/)?.[0] ?? '';
 
-            // Check if course exists, create it if not
-            let course = courseCodeMap.get(baseCourseCode);
-            if (!course) {
+            if (!courseCodeMap.has(baseCourseCode)) {
               this.logger.debug(
-                `[SYNC DATA FROM SCHEDULE] Creating new course: ${baseCourseCode}`,
+                `[SYNC DATA FROM SCHEDULE] No match found for course: ${baseCourseCode}`,
               );
-              course = await this.courseService.createCourse({
-                courseCode: baseCourseCode,
-                name: courseName,
-                credits: credits,
-                isNew: true,
-              });
-              courseCodeMap.set(baseCourseCode, course); // Update the map
+              return;
             }
 
-            // Create position DTO
+            const course = courseCodeMap.get(baseCourseCode);
             const coursePosDto = plainToInstance(CoursePositionDto, {
               days: params[3],
               startPeriod: parseInt(params[6], 10) || null,
               periods: parseInt(params[7], 10) || null,
               scheduler: template,
               courses: course,
-              isLab: params[5].startsWith('LA'), // Check if location starts with "LA"
+              isLab: params[5].startsWith('LA'), // Set isLab if location starts with "LA"
             });
 
-            // Create value DTO
             const courseValueDto = plainToInstance(CourseValueDto, {
               lecture: params[8],
               location: params[5],
@@ -361,27 +347,6 @@ export class SyncDataService {
         }
       });
 
-      // Delete existing course values and replace them with new ones
-      if (allCourseDetails.length > 0) {
-        this.logger.debug(
-          `[SYNC DATA FROM SCHEDULE] Deleting existing course values for template ID: ${template.id}`,
-        );
-        await this.courseValueService.deleteByTemplateId(
-          template.id,
-          queryRunner.manager,
-        );
-
-        for (const courseValueDto of allCourseDetails) {
-          await this.courseValueService.createCourseValue(
-            courseValueDto,
-            queryRunner.manager,
-          );
-        }
-        this.logger.debug(
-          '[SYNC DATA FROM SCHEDULE] New course values created successfully',
-        );
-      }
-
       for (const coursePosDto of allCoursePositions) {
         const exists =
           await this.coursePosService.existsCoursePosition(coursePosDto);
@@ -393,8 +358,27 @@ export class SyncDataService {
         }
       }
 
-      syncReq.status = true;
+      let newCourseValueCreated = false;
+      for (const courseValueDto of allCourseDetails) {
+        const exists =
+          await this.courseValueService.existsCourseValue(courseValueDto);
+        if (!exists) {
+          await this.courseValueService.createCourseValue(
+            courseValueDto,
+            queryRunner.manager,
+          );
+          newCourseValueCreated = true;
+          this.logger.debug(
+            '[SYNC DATA FROM SCHEDULE] Course value created successfully',
+          );
+        }
+      }
+
+      syncReq.status = newCourseValueCreated;
       syncReq.finishTime = new Date();
+      syncReq.failReason = newCourseValueCreated
+        ? null
+        : SyncFailReason.EXISTED_COURSE_VALUE;
 
       await queryRunner.commitTransaction();
       this.logger.debug('[SYNC DATA FROM SCHEDULE] Transaction committed');
