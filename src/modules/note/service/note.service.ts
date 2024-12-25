@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NoteEntity } from '../entity/note.entity';
 import { Repository } from 'typeorm';
@@ -12,7 +12,7 @@ export class NoteService {
     @InjectRepository(NoteEntity)
     private readonly noteRepository: Repository<NoteEntity>,
     private readonly logger: TracingLoggerService,
-    private readonly courseValueService: CourseValueService,
+    @Inject(forwardRef(() => CourseValueService)) private readonly courseValueService: CourseValueService,
   ) {
     this.logger.setContext(NoteService.name);
   }

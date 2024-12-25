@@ -8,10 +8,12 @@ import { CourseValueEntity } from '../courseValue/entity/courseValue.entity';
 import { TracingLoggerService } from '../../logger/tracing-logger.service';
 import { UserService } from '../user/service/user.service';
 import { UserEntity } from '../user/entity/user.entity';
+import {NoteService} from "../note/service/note.service";
+import {NoteEntity} from "../note/entity/note.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DeadlineEntity, CourseValueEntity, UserEntity]),
+    TypeOrmModule.forFeature([DeadlineEntity, CourseValueEntity, UserEntity, NoteEntity]),
   ],
   controllers: [DeadlineController],
   providers: [
@@ -19,6 +21,7 @@ import { UserEntity } from '../user/entity/user.entity';
     CourseValueService,
     TracingLoggerService,
     UserService,
+    NoteService
   ],
 })
 export class DeadlineModule {}
