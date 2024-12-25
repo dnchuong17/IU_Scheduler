@@ -22,7 +22,7 @@ import { RedisHelper } from '../../redis/service/redis.service';
 import { SessionIdSyncDto } from '../dto/sync.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SyncEventEntity } from '../entities/sync-event.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { SyncRequestDto } from '../dto/sync-request.dto';
 import { UserService } from '../../user/service/user.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -42,6 +42,8 @@ import { CoursePositionDto } from '../../coursePosition/dto/coursePosition.dto';
 import { SchedulerTemplateEntity } from '../../schedulerTemplate/entity/schedulerTemplate.entity';
 import { ScheduleTemplateService } from '../../schedulerTemplate/service/scheduleTemplate.service';
 import { CoursePositionService } from '../../coursePosition/service/coursePosition.service';
+import { CourseValueEntity } from '../../courseValue/entity/courseValue.entity';
+import { NoteEntity } from '../../note/entity/note.entity';
 
 @Injectable()
 export class SyncDataService {
@@ -140,59 +142,63 @@ export class SyncDataService {
       this.logger.debug('[SYNC DATA FROM ROAD MAP] missing session id');
       return;
     }
-    const existCourseCodes = await this.courseService.getAllCourses();
+    const existCourseCodes = new Set(await this.courseService.getAllCourses());
 
     const response = await this.instance.get('/Default.aspx?page=ctdtkhoisv', {
-      headers: {
-        Cookie: checkKey,
-      },
+      headers: { Cookie: checkKey },
     });
     const $ = cheerio.load(response.data);
     const elements = $('[id*="lkDownload"]');
-    for (let index = 0; index < elements.length; index++) {
-      const element = elements[index];
-      const courseName = $(element).text().trim();
-      const courseCode = $(element)
-        .closest('td')
-        .prev()
-        .find('span')
-        .text()
-        .trim();
-      const credits = $(element)
-        .closest('td')
-        .next()
-        .find('span')
-        .text()
-        .trim();
+    const courseDtos = elements
+      .map((_, element) => {
+        const $element = $(element);
+        const courseCode = $element
+          .closest('td')
+          .prev()
+          .find('span')
+          .text()
+          .trim();
+        const courseName = $element.text().trim();
+        const credits = Number(
+          $element.closest('td').next().find('span').text().trim(),
+        );
 
-      const courseDto = plainToInstance(CoursesDto, {
-        courseCode,
-        name: courseName,
-        credits: Number(credits),
-        isNew: true,
-      });
-      if (existCourseCodes.includes(courseDto.courseCode)) {
+        return plainToInstance(CoursesDto, {
+          courseCode,
+          name: courseName,
+          credits,
+          isNew: true,
+        });
+      })
+      .get();
+
+    const createdCourses = await Promise.all(
+      courseDtos.map(async (courseDto) => {
+        if (existCourseCodes.has(courseDto.courseCode)) {
+          this.logger.debug(
+            `[SYNC DATA FROM ROAD MAP] Skipping existing course: ${courseDto.courseCode}`,
+          );
+          return null; // Skip existing courses
+        }
+
+        await this.courseService.createCourse(courseDto);
         this.logger.debug(
-          `[SYNC DATA FROM ROAD MAP] Course ${courseDto.courseCode} is existed`,
+          `[SYNC DATA FROM ROAD MAP] Successfully created course: ${courseDto.courseCode}`,
         );
-        syncReq.status = false;
-        syncReq.failReason = SyncFailReason.EXISTED_COURSE;
-        syncReq.finishTime = new Date();
-        await this.createSyncEvent(syncReq);
-        throw new BadRequestException(
-          `Course ${courseDto.courseCode} is existed`,
-        );
-      }
-      await this.courseService.createCourse(courseDto);
-      this.logger.debug(
-        `[SYNC DATA FROM ROAD MAP] Successfully created course: ${courseCode}`,
-      );
-    }
-    this.logger.debug('[SYNC DATA FROM ROAD MAP] Create sync event');
+        return courseDto.courseCode;
+      }),
+    );
+
+    const newCourses = createdCourses.filter((code) => code !== null);
+
     syncReq.status = true;
     syncReq.failReason = null;
     syncReq.finishTime = new Date();
     await this.createSyncEvent(syncReq);
+
+    this.logger.debug(
+      `[SYNC DATA FROM ROAD MAP] Sync completed. New courses created: ${newCourses.length}`,
+    );
   }
 
   async processSyncSchedulerData(studentIdList?: string[]) {
@@ -298,8 +304,9 @@ export class SyncDataService {
       const allCourseDetails: CourseValueDto[] = [];
       const allCoursePositions: CoursePositionDto[] = [];
 
-      $('td[onmouseover^="ddrivetip"]').each((_, element) => {
-        const onmouseoverAttr = $(element).attr('onmouseover');
+      $('td[onmouseover^="ddrivetip"]').each(async (_, element) => {
+        const $element = $(element);
+        const onmouseoverAttr = $element.attr('onmouseover');
         if (onmouseoverAttr) {
           const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
           if (paramsString) {
@@ -307,26 +314,39 @@ export class SyncDataService {
               .split(',')
               .map((param) => param.replace(/'/g, '').trim());
 
-            const courseCode = params[2].toUpperCase().trim();
-            const baseCourseCode = courseCode.match(/^([A-Z0-9]+)/)?.[0] ?? '';
+            // Extract course details
+            const courseCodeFull = params[2].toUpperCase().trim();
+            const baseCourseCode =
+              courseCodeFull.match(/^([A-Z0-9]+)/)?.[0] ?? '';
+            const courseName = $element.find('span').first().text().trim();
+            const credits = parseInt(params[6], 10) || 0;
 
-            if (!courseCodeMap.has(baseCourseCode)) {
+            // Check if course exists, create it if not
+            let course = courseCodeMap.get(baseCourseCode);
+            if (!course) {
               this.logger.debug(
-                `[SYNC DATA FROM SCHEDULE] No match found for course: ${baseCourseCode}`,
+                `[SYNC DATA FROM SCHEDULE] Creating new course: ${baseCourseCode}`,
               );
-              return;
+              course = await this.courseService.createCourse({
+                courseCode: baseCourseCode,
+                name: courseName,
+                credits: credits,
+                isNew: true,
+              });
+              courseCodeMap.set(baseCourseCode, course); // Update the map
             }
 
-            const course = courseCodeMap.get(baseCourseCode);
+            // Create position DTO
             const coursePosDto = plainToInstance(CoursePositionDto, {
               days: params[3],
               startPeriod: parseInt(params[6], 10) || null,
               periods: parseInt(params[7], 10) || null,
               scheduler: template,
               courses: course,
-              isLab: params[5].startsWith('LA'), // Set isLab if location starts with "LA"
+              isLab: params[5].startsWith('LA'), // Check if location starts with "LA"
             });
 
+            // Create value DTO
             const courseValueDto = plainToInstance(CourseValueDto, {
               lecture: params[8],
               location: params[5],
@@ -341,6 +361,27 @@ export class SyncDataService {
         }
       });
 
+      // Delete existing course values and replace them with new ones
+      if (allCourseDetails.length > 0) {
+        this.logger.debug(
+          `[SYNC DATA FROM SCHEDULE] Deleting existing course values for template ID: ${template.id}`,
+        );
+        await this.courseValueService.deleteByTemplateId(
+          template.id,
+          queryRunner.manager,
+        );
+
+        for (const courseValueDto of allCourseDetails) {
+          await this.courseValueService.createCourseValue(
+            courseValueDto,
+            queryRunner.manager,
+          );
+        }
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] New course values created successfully',
+        );
+      }
+
       for (const coursePosDto of allCoursePositions) {
         const exists =
           await this.coursePosService.existsCoursePosition(coursePosDto);
@@ -352,27 +393,8 @@ export class SyncDataService {
         }
       }
 
-      let newCourseValueCreated = false;
-      for (const courseValueDto of allCourseDetails) {
-        const exists =
-          await this.courseValueService.existsCourseValue(courseValueDto);
-        if (!exists) {
-          await this.courseValueService.createCourseValue(
-            courseValueDto,
-            queryRunner.manager,
-          );
-          newCourseValueCreated = true;
-          this.logger.debug(
-            '[SYNC DATA FROM SCHEDULE] Course value created successfully',
-          );
-        }
-      }
-
-      syncReq.status = newCourseValueCreated;
+      syncReq.status = true;
       syncReq.finishTime = new Date();
-      syncReq.failReason = newCourseValueCreated
-        ? null
-        : SyncFailReason.EXISTED_COURSE_VALUE;
 
       await queryRunner.commitTransaction();
       this.logger.debug('[SYNC DATA FROM SCHEDULE] Transaction committed');
@@ -426,5 +448,42 @@ export class SyncDataService {
       .where('info.role =:value', { value: RoleType.SYNC })
       .getOne();
     return syncAdmin;
+  }
+
+  async deleteByTemplateId(
+    templateId: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const courseValues = await manager.find(CourseValueEntity, {
+      where: { scheduler: { id: templateId } },
+      relations: ['note'],
+    });
+
+    if (!courseValues.length) {
+      this.logger.debug(
+        `[DELETE BY TEMPLATE ID] No course values found for template ID: ${templateId}`,
+      );
+      return;
+    }
+
+    // Step 2: Collect Note IDs
+    const noteIds = courseValues
+      .map((courseValue) => courseValue.note?.id)
+      .filter((id): id is number => !!id);
+
+    // Step 3: Delete Notes
+    if (noteIds.length) {
+      await manager.delete(NoteEntity, noteIds);
+      this.logger.debug(
+        `[DELETE NOTES] Deleted ${noteIds.length} notes successfully.`,
+      );
+    }
+
+    // Step 4: Delete CourseValues
+    const courseValueIds = courseValues.map((courseValue) => courseValue.id);
+    await manager.delete(CourseValueEntity, courseValueIds);
+    this.logger.debug(
+      `[DELETE COURSE VALUES] Deleted ${courseValueIds.length} course values successfully.`,
+    );
   }
 }

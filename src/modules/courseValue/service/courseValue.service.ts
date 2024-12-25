@@ -167,4 +167,33 @@ export class CourseValueService {
       `[DELETE COURSE VALUE]Deleted course value with ID: ${existingCourseValue.id} successfully!`,
     );
   }
+
+  async deleteByTemplateId(
+    templateId: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const courseValues = await manager.find(CourseValueEntity, {
+      where: { scheduler: { id: templateId } },
+      relations: ['note'],
+    });
+
+    if (!courseValues.length) {
+      this.logger.debug(`[DELETE BY TEMPLATE ID] No course values found for template ID: ${templateId}`);
+      return;
+    }
+
+    const noteIds = courseValues
+      .map((courseValue) => courseValue.note?.id)
+      .filter((id): id is number => !!id);
+
+    if (noteIds.length) {
+      await manager.delete(NoteEntity, noteIds);
+      this.logger.debug(`[DELETE NOTES] Deleted ${noteIds.length} notes successfully.`);
+    }
+
+    const courseValueIds = courseValues.map((courseValue) => courseValue.id);
+    await manager.delete(CourseValueEntity, courseValueIds);
+    this.logger.debug(`[DELETE COURSE VALUES] Deleted ${courseValueIds.length} course values successfully.`);
+  }
+
 }

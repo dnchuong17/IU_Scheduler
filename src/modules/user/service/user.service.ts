@@ -91,7 +91,6 @@ export class UserService {
     if (!user || user.length === 0) {
       throw new Error('User not found');
     }
-
     return user[0];
   }
 }
