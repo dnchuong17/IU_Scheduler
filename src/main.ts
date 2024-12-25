@@ -14,7 +14,7 @@ async function bootstrap() {
   app.setGlobalPrefix('/api');
   app.use(compression());
   app.enableCors({
-    origin: ['http://localhost:5173', 'https://iu-schedule-fe.vercel.app'],
+    origin: ['http://localhost:5173', 'https://iu-schedule.vercel.app'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Nếu cần gửi cookies
   });
