@@ -91,8 +91,9 @@ export class DeadlineService {
   }
 
   async getDeadlineById(id: number) {
-    const deadlines = 'SELECT * FROM deadline WHERE id = $1';
-    return await this.dataSource.query(deadlines, [id]);
+    const queryDeadlines = 'SELECT * FROM deadline WHERE "UID" = $1';
+    const deadline = await this.dataSource.query(queryDeadlines, [id]);
+    return deadline[0];
   }
 
   async getDeadlineByCourseValueId(courseValueId: number) {
