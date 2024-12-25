@@ -305,7 +305,8 @@ export class SyncDataService {
       const allCoursePositions: CoursePositionDto[] = [];
 
       $('td[onmouseover^="ddrivetip"]').each(async (_, element) => {
-        const onmouseoverAttr = $(element).attr('onmouseover');
+        const $element = $(element);
+        const onmouseoverAttr = $element.attr('onmouseover');
         if (onmouseoverAttr) {
           const paramsString = onmouseoverAttr.match(/ddrivetip\((.+)\)/)?.[1];
           if (paramsString) {
@@ -313,36 +314,39 @@ export class SyncDataService {
               .split(',')
               .map((param) => param.replace(/'/g, '').trim());
 
-            const courseCode = params[2].toUpperCase().trim();
-            const baseCourseCode = courseCode.match(/^([A-Z0-9]+)/)?.[0] ?? '';
+            // Extract course details
+            const courseCodeFull = params[2].toUpperCase().trim();
+            const baseCourseCode =
+              courseCodeFull.match(/^([A-Z0-9]+)/)?.[0] ?? '';
+            const courseName = $element.find('span').first().text().trim();
+            const credits = parseInt(params[6], 10) || 0;
 
+            // Check if course exists, create it if not
             let course = courseCodeMap.get(baseCourseCode);
-
-            // Create the course if it doesn't exist
             if (!course) {
               this.logger.debug(
-                `[SYNC DATA FROM SCHEDULE] Creating new course for: ${baseCourseCode}`,
+                `[SYNC DATA FROM SCHEDULE] Creating new course: ${baseCourseCode}`,
               );
               course = await this.courseService.createCourse({
                 courseCode: baseCourseCode,
-                name: `Course ${baseCourseCode}`, // Default name if not provided
-                credits: 0, // Default credits, adjust if necessary
+                name: courseName,
+                credits: credits,
                 isNew: true,
               });
-
-              // Add the new course to the map
-              courseCodeMap.set(baseCourseCode, course);
+              courseCodeMap.set(baseCourseCode, course); // Update the map
             }
 
+            // Create position DTO
             const coursePosDto = plainToInstance(CoursePositionDto, {
               days: params[3],
               startPeriod: parseInt(params[6], 10) || null,
               periods: parseInt(params[7], 10) || null,
               scheduler: template,
               courses: course,
-              isLab: params[5].startsWith('LA'), // Set isLab if location starts with "LA"
+              isLab: params[5].startsWith('LA'), // Check if location starts with "LA"
             });
 
+            // Create value DTO
             const courseValueDto = plainToInstance(CourseValueDto, {
               lecture: params[8],
               location: params[5],
@@ -357,17 +361,55 @@ export class SyncDataService {
         }
       });
 
-      await queryRunner.commitTransaction();
+      // Delete existing course values and replace them with new ones
+      if (allCourseDetails.length > 0) {
+        this.logger.debug(
+          `[SYNC DATA FROM SCHEDULE] Deleting existing course values for template ID: ${template.id}`,
+        );
+        await this.courseValueService.deleteByTemplateId(
+          template.id,
+          queryRunner.manager,
+        );
 
-      this.logger.debug('[SYNC DATA FROM SCHEDULE] Synchronization completed.');
+        for (const courseValueDto of allCourseDetails) {
+          await this.courseValueService.createCourseValue(
+            courseValueDto,
+            queryRunner.manager,
+          );
+        }
+        this.logger.debug(
+          '[SYNC DATA FROM SCHEDULE] New course values created successfully',
+        );
+      }
+
+      for (const coursePosDto of allCoursePositions) {
+        const exists =
+          await this.coursePosService.existsCoursePosition(coursePosDto);
+        if (!exists) {
+          await this.coursePosService.createCoursePos(
+            coursePosDto,
+            queryRunner.manager,
+          );
+        }
+      }
+
+      syncReq.status = true;
+      syncReq.finishTime = new Date();
+
+      await queryRunner.commitTransaction();
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Transaction committed');
     } catch (error) {
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
+      syncReq.failReason = error.message;
       this.logger.error(
-        '[SYNC DATA FROM SCHEDULE] Synchronization failed:',
-        error,
+        `[SYNC DATA FROM SCHEDULE] Transaction failed: ${error.message}`,
       );
-      await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
+      await this.createSyncEvent(syncReq);
+      this.logger.debug('[SYNC DATA FROM SCHEDULE] Sync event created');
     }
   }
 
