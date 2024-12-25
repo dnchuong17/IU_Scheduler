@@ -8,7 +8,7 @@ export class NoteController {
 
   @Get(':id')
   getNoteByCourseValueId(@Param('id') id: number) {
-    return this.noteService.getNoteByCourseValueId(+id);
+    return this.noteService.getNoteByCourseValueId(id);
   }
 
   // @Post('create')
