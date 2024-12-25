@@ -7,8 +7,8 @@ export class NoteController {
   constructor(private readonly noteService: NoteService) {}
 
   @Get(':id')
-  getNoteById(@Param('id') id: number) {
-    return this.noteService.getNoteById(+id);
+  getNoteByCourseValueId(@Param('id') id: number) {
+    return this.noteService.getNoteByCourseValueId(+id);
   }
 
   @Post('create')
