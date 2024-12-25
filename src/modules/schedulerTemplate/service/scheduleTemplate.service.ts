@@ -93,11 +93,16 @@ export class ScheduleTemplateService {
             courses: newCourse,
           });
           // Create a new course value
-          await this.courseValueService.createCourseValue({
-            lecture: lecturer,
-            location: location,
-            courses: newCourse,
-            scheduler: newTemplate,
+          const newCourseValue =
+            await this.courseValueService.createCourseValue({
+              lecture: lecturer,
+              location: location,
+              courses: existedCourse,
+              scheduler: newTemplate,
+            });
+          await this.noteService.createNote({
+            content: '',
+            courseValueId: newCourseValue.id,
           });
         } else {
           if (isLab === true) {
@@ -110,11 +115,16 @@ export class ScheduleTemplateService {
                 scheduler: newTemplate,
               });
             if (existingLabCourseVal === false) {
-              await this.courseValueService.createCourseValue({
-                lecture: lecturer,
-                location: location,
-                courses: existedCourse,
-                scheduler: newTemplate,
+              const newCourseValue =
+                await this.courseValueService.createCourseValue({
+                  lecture: lecturer,
+                  location: location,
+                  courses: existedCourse,
+                  scheduler: newTemplate,
+                });
+              await this.noteService.createNote({
+                content: '',
+                courseValueId: newCourseValue.id,
               });
             } else {
               await this.courseValueService.updateCourseValue({
@@ -230,11 +240,16 @@ export class ScheduleTemplateService {
               courses: newCourse,
             });
             // Create a new course value
-            await this.courseValueService.createCourseValue({
-              lecture: lecturer,
-              location: location,
-              courses: newCourse,
-              scheduler: existedTemplate,
+            const newCourseValue =
+              await this.courseValueService.createCourseValue({
+                lecture: lecturer,
+                location: location,
+                courses: newCourse,
+                scheduler: existedTemplate,
+              });
+            await this.noteService.createNote({
+              content: '',
+              courseValueId: newCourseValue.id,
             });
           }
           // If one course can be found by course code
@@ -249,11 +264,16 @@ export class ScheduleTemplateService {
                   scheduler: existedTemplate,
                 });
               if (existingLabCourseVal === false) {
-                await this.courseValueService.createCourseValue({
-                  lecture: lecturer,
-                  location: location,
-                  courses: existedCourse,
-                  scheduler: existedTemplate,
+                const newCourseValue =
+                  await this.courseValueService.createCourseValue({
+                    lecture: lecturer,
+                    location: location,
+                    courses: existedCourse,
+                    scheduler: existedTemplate,
+                  });
+                await this.noteService.createNote({
+                  content: '',
+                  courseValueId: newCourseValue.id,
                 });
               } else {
                 await this.courseValueService.updateCourseValue({
